@@ -61,6 +61,7 @@ Each attempted transition produces a trace entry. Failed attempts do not move au
 `RESERVE` binds:
 
 ```text
+base_sequence, when supplied
 reservation_id
 obligation_id
 nullifier
@@ -76,6 +77,9 @@ The reference kernel rejects:
 duplicate reservation_id
 duplicate obligation_id
 duplicate nullifier
+missing or blank reservation binding fields
+stale base_sequence
+missing base_sequence when sequenced mode requires it
 holder not found
 insufficient available authority
 invalid amount
