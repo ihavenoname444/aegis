@@ -54,6 +54,9 @@ export const AuthorityReason = Object.freeze({
   RESERVATION_EXISTS: "RESERVATION_EXISTS",
   RESERVATION_NOT_FOUND: "RESERVATION_NOT_FOUND",
   RESERVATION_NOT_ACTIVE: "RESERVATION_NOT_ACTIVE",
+  INVALID_RESERVATION_BINDING: "INVALID_RESERVATION_BINDING",
+  BASE_SEQUENCE_REQUIRED: "BASE_SEQUENCE_REQUIRED",
+  STALE_STATE: "STALE_STATE",
   OBLIGATION_ALREADY_BOUND: "OBLIGATION_ALREADY_BOUND",
   NULLIFIER_ALREADY_USED: "NULLIFIER_ALREADY_USED",
   RECEIPT_REQUIRED: "RECEIPT_REQUIRED",
@@ -61,7 +64,7 @@ export const AuthorityReason = Object.freeze({
   UNKNOWN_TRANSITION: "UNKNOWN_TRANSITION"
 });
 
-export function createAuthorityState({ root_id = "root", root_authorized }) {
+export function createAuthorityState({ root_id = "root", root_authorized, require_base_sequence = false }) {
   if (!isPositiveAmount(root_authorized)) {
     throw new Error("root_authorized must be a positive integer");
   }
@@ -82,13 +85,17 @@ export function createAuthorityState({ root_id = "root", root_authorized }) {
     revoked_mandates: [],
     spent_nullifiers: [],
     trace: [],
-    sequence: 0
+    sequence: 0,
+    require_base_sequence
   };
 }
 
 export function applyTransition(state, transition) {
   const next = cloneState(state);
-  const result = applyTransitionToClone(next, transition);
+  const baseSequenceReason = validateBaseSequence(next, transition);
+  const result = baseSequenceReason === AuthorityReason.OK
+    ? applyTransitionToClone(next, transition)
+    : fail(baseSequenceReason);
   const sequence = next.sequence + 1;
   const traceEntry = {
     sequence,
@@ -167,6 +174,9 @@ function delegate(state, transition) {
 function reserve(state, transition) {
   const amount = transition.amount;
   if (!isPositiveAmount(amount)) return fail(AuthorityReason.INVALID_AMOUNT);
+  if (!hasValidReservationBinding(transition)) {
+    return fail(AuthorityReason.INVALID_RESERVATION_BINDING);
+  }
 
   const holder = state.holders[transition.holder_id];
   if (!holder) return fail(AuthorityReason.HOLDER_NOT_FOUND);
@@ -296,6 +306,35 @@ function fail(reason) {
 
 function isPositiveAmount(amount) {
   return Number.isInteger(amount) && amount > 0;
+}
+
+function hasValidReservationBinding(transition) {
+  return [
+    transition.reservation_id,
+    transition.obligation_id,
+    transition.nullifier,
+    transition.holder_id,
+    transition.effect_id,
+    transition.execution_domain
+  ].every(isNonEmptyString);
+}
+
+function validateBaseSequence(state, transition) {
+  if (!isAuthorityMovingTransition(transition.type)) return AuthorityReason.OK;
+  if (transition.base_sequence === undefined) {
+    return state.require_base_sequence ? AuthorityReason.BASE_SEQUENCE_REQUIRED : AuthorityReason.OK;
+  }
+  return Number.isInteger(transition.base_sequence) && transition.base_sequence === state.sequence
+    ? AuthorityReason.OK
+    : AuthorityReason.STALE_STATE;
+}
+
+function isAuthorityMovingTransition(type) {
+  return Object.values(Transition).includes(type);
+}
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function cloneState(state) {
