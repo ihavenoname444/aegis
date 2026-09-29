@@ -1,6 +1,6 @@
 {
   "name": "aegis-v-reference",
-  "version": "0.0.7",
+  "version": "0.0.13",
   "private": true,
   "description": "Reference model and verifier for conserved autonomous authority.",
   "type": "module",
@@ -8,7 +8,8 @@
     "demo:five-rails": "node src/demo.js",
     "demo:hostile": "node src/hostile-demo.js",
     "demo:dependency": "node src/mandatory-dependency-demo.js",
-    "conformance": "npm test && npm run demo:five-rails && npm run demo:hostile && npm run demo:dependency",
+    "demo:institutional": "node src/institutional-demo.js",
+    "conformance": "npm test && npm run demo:five-rails && npm run demo:hostile && npm run demo:dependency && npm run demo:institutional",
     "test": "node --test tests/*.test.js",
     "verify": "node src/cli.js"
   },
