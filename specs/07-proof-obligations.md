@@ -66,6 +66,12 @@ Without canonical authority state or an equivalent shared coordination layer, a 
 
 T22 V PROFILE REDLINE:
 Under AEGIS_V_HIGH_ASSURANCE_V0, a proof without unique V encumbrance is invalid.
+
+T23 MULTI-PRINCIPAL CONSERVATION:
+Threshold/root composition must not create aggregate authority above the institutional root.
+
+T24 RECOVERY NON-EXPANSION:
+Recovery or emergency paths must restore legitimate control without manufacturing new authority.
 ```
 
 Current evidence:
@@ -78,4 +84,6 @@ T19: partial; H2 migration rejected, full migration protocol not implemented.
 T20: implementation-tested for finalized H2 state rejection.
 T21: implementation-tested for missing canonical state returning UNKNOWN.
 T22: implementation-tested for V removal and A/WRAM/USDC/BTC/TOKEN_X substitution rejection.
+T23: implementation-tested for one active institutional root after threshold approval.
+T24: partial; hidden master-key root activation is rejected, and recovery/re-binding cannot create a second active root for the same principal or legal attestation. Full recovery ceremony not implemented.
 ```
