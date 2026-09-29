@@ -10,15 +10,21 @@ Verdict for this run:
 MODIFY
 ```
 
-The current repository is a useful reference verifier/demo scaffold. It is not yet a high-assurance autonomous authority architecture. It now includes a deterministic reference authority state machine, a `10,000 -> 10,001` hostile amplification harness, a reference V-backed capacity ledger, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, seeded property tests, enumerated interleaving tests and a first-pass TLA+ conservation specification. It still does not implement migration safety, authority cells, distributed revocation/finality race modeling, production staking contract, or completed formal proof obligations required by the master architecture.
+The current repository is a useful reference verifier/demo scaffold. It is not yet a high-assurance autonomous authority architecture. It now includes a deterministic reference authority state machine, a `10,000 -> 10,001` hostile amplification harness, a reference V-backed capacity ledger, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, institutional assurance profiles, multi-principal root-binding hardening, recovery/re-binding non-expansion checks, reservation-binding completeness checks, stale base-sequence rejection, sequenced-mode base-sequence enforcement, seeded property tests, enumerated interleaving tests and first-pass TLA+ conservation specifications. It still does not implement migration safety, authority cells, distributed revocation/finality race modeling, production staking contract, or completed formal proof obligations required by the master architecture.
 
 Post-audit implementation update:
 
 - `src/authority-kernel.js` now includes executable transitions for `DELEGATE`, `RESERVE`, `CONSUME`, `QUARANTINE`, `RETURN`, and `REVOKE_MANDATE`.
+- `src/authority-kernel.js` now rejects `RESERVE` transitions with missing or blank reservation/economic binding fields.
+- `src/authority-kernel.js` now rejects transitions carrying stale or non-integer `base_sequence` preconditions.
+- `src/authority-kernel.js` now supports `require_base_sequence` for sequenced states and rejects authority-moving transitions missing `base_sequence` in that mode.
 - `src/hostile-harness.js` now runs a `10,000` root / `1,000` child / five-domain hostile amplification trace.
 - `src/capacity-kernel.js` now includes a provider-level capacity ledger that rejects global V double-backing and V/RAM substitution failures.
 - `src/revocation-policy.js` now implements `ONLINE_HIGH_ASSURANCE`, `BOUNDED_OFFLINE`, and `LOCAL_CELL` freshness profiles.
 - `tests/authority-kernel.test.js` now implementation-tests conservation through delegation, reservation, quarantine and explicit `+1` rejection.
+- `tests/authority-kernel.test.js` now implementation-tests missing-nullifier and blank-binding reservation rejection.
+- `tests/authority-kernel.test.js` now implementation-tests stale and type-forged `base_sequence` reservation rejection.
+- `tests/authority-kernel.test.js` now implementation-tests sequenced-mode missing-`base_sequence` rejection for delegation and reservation.
 - `tests/capacity-ledger.test.js` now implementation-tests V double-backing, zero-V certificate rejection, RAM-only substitution rejection, V-only substitution rejection and capacity retirement.
 - `tests/revocation-policy.test.js` now implementation-tests revocation T0/T1/T2-style behavior for online, bounded-offline and local-cell modes.
 - `tests/governance-capture.test.js` now implementation-tests malicious H2 kernel rejection, profile hash pinning, ABI pinning, finality-rule pinning, finalized-H2 rejection, capacity-epoch non-retroactivity, cross-epoch V double-back rejection and admin override rejection.
@@ -26,8 +32,19 @@ Post-audit implementation update:
 - `tests/mandatory-dependency.test.js` now implementation-tests missing canonical authority state, V removal, A/WRAM/USDC/BTC/TOKEN_X substitution, missing unique V encumbrance and generic token-gate profile rejection.
 - `src/mandatory-dependency-demo.js` now runs the dependency redlines as a reviewer-facing CLI demo.
 - `docs/MANDATORY_DEPENDENCY_ANALYSIS.md` now defines the exact guarantee lost when AEGIS-V is bypassed and marks V production necessity as unproven.
+- `src/institutional-profiles.js` now defines tier-1 bank, central-bank systemic and market-infrastructure policy gates.
+- `tests/institutional-profiles.test.js` now implementation-tests institutional high-assurance versus advisory/bypassable policy failure.
+- `docs/INSTITUTIONAL_READINESS.md` now frames the artifact for regulated institutional architecture review without claiming endorsement.
+- `src/root-binding.js` now models institutional root activation through threshold approvals without copying authority to each signer.
+- `tests/root-binding.test.js` now implementation-tests multi-principal conservation, role separation, root-overrun rejection, hidden master-key rejection, recovery re-binding rejection and legal-attestation alias rejection.
+- `specs/10-root-binding-v0.md` now defines the first root-binding boundary between legal/institutional authority and AEGIS authority state.
+- `models/RootBinding.tla` now specifies the first recovery/re-binding non-expansion invariant; it has not yet been TLC-checked in this run.
+- `docs/COMPOSITION_MODEL.md` now defines the first explicit composition-safety model and marks general module composition as unproven.
+- `docs/THESIS_KILLERS.md` now tracks the highest-risk falsification tests, including multi-principal authority creation.
 - `tests/authority-properties.test.js` now property-tests seeded random transition sequences and enumerated reservation interleavings.
 - `models/AuthorityKernel.tla` now specifies the first conservation invariant; it has not yet been TLC-checked in this run.
+- `models/AuthorityKernel.tla` now tracks reservation id uniqueness alongside obligation/nullifier uniqueness.
+- `models/AuthorityKernel.tla` now includes a sequence precondition on reservation transitions.
 - This remains implementation evidence, not formal proof.
 
 ## 1. Existing Repository Tree Summary
@@ -46,13 +63,18 @@ specs/
   06-evidence-classes-v0.md
   07-proof-obligations.md
   08-mandatory-dependency-v0.md
+  09-institutional-assurance-profile-v0.md
+  10-root-binding-v0.md
 docs/
   ARCHITECTURE_BASELINE.md
+  COMPOSITION_MODEL.md
   GITHUB_UPLOAD.md
   CURRENT_REPO_GAP_ANALYSIS.md
   EVIDENCE_LEDGER.md
   GOVERNANCE_CAPTURE_GAP_ANALYSIS.md
+  INSTITUTIONAL_READINESS.md
   MANDATORY_DEPENDENCY_ANALYSIS.md
+  THESIS_KILLERS.md
 src/
   authority-kernel.js
   capacity-kernel.js
@@ -61,8 +83,11 @@ src/
   consequence-kernel.js
   demo.js
   fixtures.js
+  institutional-demo.js
+  institutional-profiles.js
   mandatory-dependency-demo.js
   revocation-policy.js
+  root-binding.js
   scenarios.js
   types.js
   verifier.js
@@ -71,13 +96,17 @@ tests/
   authority-properties.test.js
   capacity-ledger.test.js
   governance-capture.test.js
+  institutional-profiles.test.js
   mandatory-dependency.test.js
   revocation-policy.test.js
+  root-binding.test.js
   scenarios.test.js
   verifier.test.js
 models/
   AuthorityKernel.tla
   AuthorityKernel.cfg
+  RootBinding.tla
+  RootBinding.cfg
   README.md
 test-vectors/
   effect-bank-payment.json
@@ -90,6 +119,7 @@ demos/
   five-rails-100-dollar.md
   governance-capture.md
   hostile-10000-to-10001.md
+  institutional-readiness.md
   mandatory-dependency.md
   revocation-profiles.md
 ```
@@ -105,13 +135,18 @@ demos/
 - Simple capacity checks reject over-encumbered V and insufficient RAM commitment.
 - Complete mediation is at least represented as `agent_has_bypass_credential`.
 - Consequence uncertainty returns `UNKNOWN`.
-- 63 implementation/property tests pass.
+- 82 implementation/property tests pass.
 - Demo clearly communicates that accepted endpoints verify proof, not AI intent.
 - Reference authority state machine now conserves accounting across delegated, reserved, quarantined and consumed authority.
+- Reservation binding completeness is now implementation-tested for missing and blank binding fields.
+- Stale base-sequence reserve proposals are now implementation-tested and rejected.
+- Sequenced states now require `base_sequence` on authority-moving transitions.
 - Hostile harness now rejects a concrete `10,000 -> 10,001` amplification attempt.
 - Capacity ledger now rejects global V double-backing and V/RAM substitution failures.
 - Governance-capture tests now reject unaccepted H2 kernels, mutated ABIs, mutated verifier profiles, changed kernel accounts, changed finality rules, finalized malicious H2 state, C4 capacity epochs and admin override attempts.
 - Mandatory-dependency tests now reject missing canonical state, V removal, A/WRAM/USDC/BTC/TOKEN_X substitutions, missing unique V encumbrance and generic token-gate profiles.
+- Institutional-profile tests now distinguish high-assurance bank/central-bank/market-infrastructure policy from advisory AI policy.
+- Multi-principal root-binding tests now reject signer-authority duplication, root overrun, separation-of-duties violation, hidden master-key activation, recovery re-binding duplication and legal-attestation alias duplication.
 - Seeded property tests now preserve conservation across random transition sequences.
 - Enumerated interleaving tests now reject same-obligation and same-funds race amplification.
 - Revocation freshness profiles now distinguish fresh approval from stale revocation knowledge.
@@ -170,7 +205,7 @@ The reference state machine rejects the fixed `10,000 -> 10,001` hostile trace, 
 
 | Layer | Current Status |
 |---|---|
-| Real-world root binding | Documented only |
+| Real-world root binding | Reference root-binding model implemented; legal/HSM/MPC binding documented only |
 | Vaulta Native Auth | Documented only |
 | AEGIS Kernel | Reference state machine implemented; not formal/prod |
 | Capacity Admission | Minimal certificate predicate |
@@ -189,6 +224,7 @@ Current security-critical code:
 - `src/authority-kernel.js`
 - `src/capacity-kernel.js`
 - `src/consequence-kernel.js`
+- `src/root-binding.js`
 - `src/canonical.js`
 
 Current TCB weakness: fixtures and tests supply trusted `state` directly. There is no canonical transition history, no finality proof verification and no independent state derivation.
@@ -205,6 +241,7 @@ Documented:
 - No receipt does not mean no execution.
 - Unknown consequence quarantines authority.
 - Valid high-assurance proof requires a valid V-backed capacity certificate.
+- Multi-principal approvals activate one conserved root; they do not copy authority.
 
 Implementation-tested:
 
@@ -215,6 +252,7 @@ Implementation-tested:
 - Missing receipt returns `UNKNOWN`.
 - Delegation/reservation/quarantine conservation is implementation-tested.
 - Fixed `10,000 -> 10,001` hostile amplification trace is rejected.
+- Multi-principal root activation creates one institutional root, not one root per signer.
 
 ## 10. Missing Invariants
 
@@ -226,6 +264,7 @@ Implementation-tested:
 - Semantic binding to intended economic effect.
 - Complete mediation for concrete adapters.
 - Capacity non-duplication across many certificates, not only one cert.
+- Production root binding to legal authority, HSM/MPC controls and board/committee workflows.
 - Key rotation / cryptographic agility safety.
 
 ## 11. Current Proof Model
@@ -369,14 +408,20 @@ IMPLEMENTED_PARTIALLY
 
 ## 19. V Substitute Test Status
 
-Partially implemented for RAM-only and V-only substitution in the reference ledger.
+Implemented partially in the reference profile. A, WRAM, USDC, BTC and TOKEN_X
+substitutions are rejected under `AEGIS_V_HIGH_ASSURANCE_V0` without changing
+verifier policy.
 
-Need tests replacing V with A/BTC/USDC/ETH/WRAM/X and asking whether the same accepted profile still validates without changing verifier policy.
+Still missing:
+
+- ETH-specific fixture.
+- production/on-chain proof that the accepted profile cannot be bypassed or
+  socially replaced by arbitrary collateral.
 
 Status:
 
 ```text
-MISSING
+IMPLEMENTED_PARTIALLY
 ```
 
 ## 20. WRAM Replacement Test Status
@@ -549,7 +594,7 @@ PARTIAL
 
 Current tests:
 
-- 63 Node tests.
+- 82 Node tests.
 - exact effect mismatch.
 - nullifier spent.
 - revoked mandate.
@@ -560,6 +605,9 @@ Current tests:
 - unknown consequence.
 - bypass credential.
 - delegate/reserve/quarantine accounting.
+- reservation binding completeness.
+- stale base-sequence rejection.
+- sequenced-mode base-sequence enforcement.
 - same obligation across five rails.
 - fixed `10,000 -> 10,001` hostile trace.
 - global V capacity double-backing.
@@ -585,6 +633,22 @@ Current tests:
 - A/WRAM/USDC/BTC/TOKEN_X substitution is rejected under the accepted high-assurance profile.
 - missing unique V encumbrance is rejected.
 - generic token-gate profile is rejected.
+- tier-1 bank high-value policy gate.
+- central-bank systemic stricter policy gate.
+- advisory AI policy cannot pass as high-assurance.
+- multi-principal root activation creates one conserved root.
+- threshold signers cannot each become independent roots.
+- separation-of-duties violation rejected.
+- hidden emergency master key activation rejected.
+- authorization above the institutional root rejected.
+- recovery re-binding under a new root id rejected for the same principal.
+- principal aliasing rejected for the same legal attestation.
+- reservation without nullifier rejected.
+- reservation with blank binding fields rejected.
+- stale base-sequence reservation rejected.
+- non-integer base-sequence reservation rejected.
+- sequenced-mode delegation without base_sequence rejected.
+- sequenced-mode reservation without base_sequence rejected.
 
 Good for verifier, first state-machine scaffold and early property testing. Insufficient for high-assurance architecture.
 
@@ -638,6 +702,12 @@ Good for verifier, first state-machine scaffold and early property testing. Insu
 10. `formal: add initial TLA+ model for reserve/consume/quarantine` DONE IN v0.0.4
 11. `security: harden verifier against governance capture` DONE IN v0.0.6
 12. `security: add mandatory dependency redline tests` DONE IN v0.0.7
+13. `institutional: add regulated assurance profiles` DONE IN v0.0.8
+14. `security: add multi-principal root-binding conservation` DONE IN v0.0.9
+15. `security: add recovery re-binding non-expansion` DONE IN v0.0.10
+16. `kernel: require complete reservation bindings` DONE IN v0.0.11
+17. `kernel: reject stale base-sequence transitions` DONE IN v0.0.12
+18. `kernel: require base sequence in sequenced mode` DONE IN v0.0.13
 
 ## 35. Files That Should Be Modified
 
@@ -649,6 +719,7 @@ Good for verifier, first state-machine scaffold and early property testing. Insu
 - `src/authority-kernel.js`
 - `src/capacity-kernel.js`
 - `src/consequence-kernel.js`
+- `src/root-binding.js`
 - `src/scenarios.js`
 - `src/verifier.js`
 - `tests/*.test.js`
@@ -710,12 +781,14 @@ Run TLC on the first TLA+ model, expand it to holders/delegation, and model dist
 | Full-context proof binding | `src/verifier.js`, `specs/03` | IMPLEMENTED_PARTIALLY | many fields absent/not checked | substitution risk | add Effect Manifest | P1 |
 | Three proof classes | no separate modules | MISSING | single verifier path | unclear proof responsibilities | split authority/capacity/finality checks | P2 |
 | Revocation profiles | `src/revocation-policy.js`, `tests/revocation-policy.test.js` | IMPLEMENTED_PARTIALLY | local verifier semantics only | distributed revocation/finality race risk | model chain/finality race | P1 |
-| One-time consumption | nullifier list + reservation model | IMPLEMENTED_PARTIALLY | enumerated local interleavings only | distributed race risk | model distributed scheduler | P0 |
+| One-time consumption | nullifier list + reservation model | IMPLEMENTED_PARTIALLY | complete binding, sequenced-mode base-sequence requirement and enumerated local interleavings only | distributed scheduler is not model-checked | model distributed scheduler | P0 |
 | Complete mediation | bypass flag | IMPLEMENTED_PARTIALLY | no adapter model | false high-assurance claim | mock bank gateway | P1 |
 | Consequence evidence | `consequence-kernel.js`, `src/authority-kernel.js` | IMPLEMENTED_PARTIALLY | quarantine exists; resolve path thin | unsafe release unresolved | model receipt resolution | P1 |
 | Capacity conservation | `capacity-kernel.js` | IMPLEMENTED_PARTIALLY | reference ledger only | no production/on-chain enforcement | add contract/kernel binding | P0 |
 | Governance non-expansion | `src/verifier.js`, `tests/governance-capture.test.js`, `docs/GOVERNANCE_CAPTURE_GAP_ANALYSIS.md` | IMPLEMENTED_PARTIALLY | reference-only; real permissions unknown | captured governance may affect liveness and social upgrade pressure | import Vaulta account permissions and model migration | P0 |
 | Mandatory dependency | `src/verifier.js`, `tests/mandatory-dependency.test.js`, `docs/MANDATORY_DEPENDENCY_ANALYSIS.md` | IMPLEMENTED_PARTIALLY | reference-only; no production contracts | bypassed domains lose canonical global authority view | model equivalent-system counterexamples | P0 |
+| Institutional readiness | `src/institutional-profiles.js`, `tests/institutional-profiles.test.js`, `docs/INSTITUTIONAL_READINESS.md` | IMPLEMENTED_PARTIALLY | policy gate only; no real institution approval | separates high-assurance profile from advisory AI claims | add bank/HSM adapter model | P0 |
+| Multi-principal root binding | `src/root-binding.js`, `tests/root-binding.test.js`, `specs/10-root-binding-v0.md`, `models/RootBinding.tla` | IMPLEMENTED_PARTIALLY | legal/HSM/MPC root binding not implemented | board/committee workflows could accidentally mint authority if modeled as separate roots | add bank/HSM adapter and recovery ceremony model | P0 |
 | V necessity | `capacity-kernel.js`, `tests/capacity-ledger.test.js`, `tests/mandatory-dependency.test.js` | IMPLEMENTED_PARTIALLY | profile rule only | production bypass still possible | prove non-bypass path | P1 |
 | VaultRAM lineage | external audits only | MISSING | not in repo | V-specific case unsupported | import evidence ledger | P2 |
 | Formal methods | `models/AuthorityKernel.tla` | IMPLEMENTED_PARTIALLY | not TLC-checked or complete | high-assurance unsupported | run TLC and expand TLA+ | P1 |
