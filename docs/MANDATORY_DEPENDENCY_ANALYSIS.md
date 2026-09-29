@@ -165,8 +165,8 @@ handling, upgrade safety, governance-capture resistance, portable proof
 verification and capacity non-double-backing.
 ```
 
-This repository is about 4,864 lines across source, tests, specs, docs and demos
-after v0.0.7. That is still a reference model, not production. The relevant moat
+This repository is about 6,277 lines across source, tests, specs, docs, demos
+and formal-model drafts after v0.0.13. That is still a reference model, not production. The relevant moat
 is not line count alone; it is the cost of proving, auditing and getting external
 institutions to accept the same semantics.
 
