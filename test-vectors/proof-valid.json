@@ -3,6 +3,7 @@
   "profile_version": "AEGIS-V-0",
   "kernel_account": "aegis.auth",
   "kernel_code_hash": "kernel:H1",
+  "kernel_abi_hash": "abi:A1",
   "authority_schema_hash": "schema:S1",
   "verifier_profile_hash": "profile:P1",
   "root_identity": "bank-root:example",
@@ -28,11 +29,16 @@
   "revocation_checkpoint": 8000,
   "finalized_checkpoint": {
     "id": "checkpoint:F1",
-    "time_ms": 9500
+    "time_ms": 9500,
+    "finality_rule": "SAVANNA_F1",
+    "kernel_code_hash": "kernel:H1"
   },
   "capacity_certificate": {
     "certificate_id": "cert:CERT1",
+    "capacity_profile": "AEGIS_V_HIGH_ASSURANCE_V0",
+    "capacity_asset": "V",
     "capacity_epoch": "C1",
+    "unique_v_encumbrance": true,
     "v_locked": 100,
     "v_encumbered": 100,
     "ram_committed_bytes": 1024,

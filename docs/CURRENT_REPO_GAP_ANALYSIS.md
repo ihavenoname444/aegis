@@ -10,7 +10,7 @@ Verdict for this run:
 MODIFY
 ```
 
-The current repository is a useful reference verifier/demo scaffold. It is not yet a high-assurance autonomous authority architecture. It now includes a deterministic reference authority state machine, a `10,000 -> 10,001` hostile amplification harness, a reference V-backed capacity ledger, revocation freshness profiles, seeded property tests, enumerated interleaving tests and a first-pass TLA+ conservation specification. It still does not implement migration safety, authority cells, distributed revocation/finality race modeling, production staking contract, or completed formal proof obligations required by the master architecture.
+The current repository is a useful reference verifier/demo scaffold. It is not yet a high-assurance autonomous authority architecture. It now includes a deterministic reference authority state machine, a `10,000 -> 10,001` hostile amplification harness, a reference V-backed capacity ledger, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, seeded property tests, enumerated interleaving tests and a first-pass TLA+ conservation specification. It still does not implement migration safety, authority cells, distributed revocation/finality race modeling, production staking contract, or completed formal proof obligations required by the master architecture.
 
 Post-audit implementation update:
 
@@ -21,6 +21,11 @@ Post-audit implementation update:
 - `tests/authority-kernel.test.js` now implementation-tests conservation through delegation, reservation, quarantine and explicit `+1` rejection.
 - `tests/capacity-ledger.test.js` now implementation-tests V double-backing, zero-V certificate rejection, RAM-only substitution rejection, V-only substitution rejection and capacity retirement.
 - `tests/revocation-policy.test.js` now implementation-tests revocation T0/T1/T2-style behavior for online, bounded-offline and local-cell modes.
+- `tests/governance-capture.test.js` now implementation-tests malicious H2 kernel rejection, profile hash pinning, ABI pinning, finality-rule pinning, finalized-H2 rejection, capacity-epoch non-retroactivity, cross-epoch V double-back rejection and admin override rejection.
+- `docs/GOVERNANCE_CAPTURE_GAP_ANALYSIS.md` now records the explicit governance-capture model and remaining production assumptions.
+- `tests/mandatory-dependency.test.js` now implementation-tests missing canonical authority state, V removal, A/WRAM/USDC/BTC/TOKEN_X substitution, missing unique V encumbrance and generic token-gate profile rejection.
+- `src/mandatory-dependency-demo.js` now runs the dependency redlines as a reviewer-facing CLI demo.
+- `docs/MANDATORY_DEPENDENCY_ANALYSIS.md` now defines the exact guarantee lost when AEGIS-V is bypassed and marks V production necessity as unproven.
 - `tests/authority-properties.test.js` now property-tests seeded random transition sequences and enumerated reservation interleavings.
 - `models/AuthorityKernel.tla` now specifies the first conservation invariant; it has not yet been TLC-checked in this run.
 - This remains implementation evidence, not formal proof.
@@ -40,11 +45,14 @@ specs/
   05-verifier-profile-v0.md
   06-evidence-classes-v0.md
   07-proof-obligations.md
+  08-mandatory-dependency-v0.md
 docs/
   ARCHITECTURE_BASELINE.md
   GITHUB_UPLOAD.md
   CURRENT_REPO_GAP_ANALYSIS.md
   EVIDENCE_LEDGER.md
+  GOVERNANCE_CAPTURE_GAP_ANALYSIS.md
+  MANDATORY_DEPENDENCY_ANALYSIS.md
 src/
   authority-kernel.js
   capacity-kernel.js
@@ -53,6 +61,7 @@ src/
   consequence-kernel.js
   demo.js
   fixtures.js
+  mandatory-dependency-demo.js
   revocation-policy.js
   scenarios.js
   types.js
@@ -61,6 +70,8 @@ tests/
   authority-kernel.test.js
   authority-properties.test.js
   capacity-ledger.test.js
+  governance-capture.test.js
+  mandatory-dependency.test.js
   revocation-policy.test.js
   scenarios.test.js
   verifier.test.js
@@ -77,7 +88,9 @@ conformance/
 demos/
   capacity-ledger.md
   five-rails-100-dollar.md
+  governance-capture.md
   hostile-10000-to-10001.md
+  mandatory-dependency.md
   revocation-profiles.md
 ```
 
@@ -92,11 +105,13 @@ demos/
 - Simple capacity checks reject over-encumbered V and insufficient RAM commitment.
 - Complete mediation is at least represented as `agent_has_bypass_credential`.
 - Consequence uncertainty returns `UNKNOWN`.
-- 43 implementation/property tests pass.
+- 63 implementation/property tests pass.
 - Demo clearly communicates that accepted endpoints verify proof, not AI intent.
 - Reference authority state machine now conserves accounting across delegated, reserved, quarantined and consumed authority.
 - Hostile harness now rejects a concrete `10,000 -> 10,001` amplification attempt.
 - Capacity ledger now rejects global V double-backing and V/RAM substitution failures.
+- Governance-capture tests now reject unaccepted H2 kernels, mutated ABIs, mutated verifier profiles, changed kernel accounts, changed finality rules, finalized malicious H2 state, C4 capacity epochs and admin override attempts.
+- Mandatory-dependency tests now reject missing canonical state, V removal, A/WRAM/USDC/BTC/TOKEN_X substitutions, missing unique V encumbrance and generic token-gate profiles.
 - Seeded property tests now preserve conservation across random transition sequences.
 - Enumerated interleaving tests now reject same-obligation and same-funds race amplification.
 - Revocation freshness profiles now distinguish fresh approval from stale revocation knowledge.
@@ -127,7 +142,7 @@ Current implementation still risks giving the impression that tests are enough. 
 - Authority algebra by resource class.
 - Disjoint authority cells.
 - Concurrency model.
-- Kernel identity object including ABI hash, finality rule and migration policy.
+- Kernel migration policy and root-approved migration protocol.
 - Upgrade/migration model.
 - Capacity ledger across many certificates.
 - V remove/substitute tests.
@@ -234,11 +249,8 @@ This is useful for scaffolding, but not yet a portable proof format.
 
 Missing or not checked:
 
-- `kernel_account` is present but not verified by policy.
-- `kernel_abi_hash`.
 - `security_profile_id`.
-- `finality_rule`.
-- `accepted migration policy`.
+- accepted migration policy.
 - `capacity_certificate_id` separate from embedded cert.
 - `counterparty`.
 - `maximum contingent exposure`.
@@ -255,12 +267,10 @@ Kernel hash is pinned. That is good.
 
 Missing:
 
-- ABI hash.
 - migration policy.
 - root migration proof.
 - old/new backend epoch lockout.
-- test that H2 is not automatically trusted.
-- test that old and new kernels cannot consume same authority.
+- full proof that old and new kernels cannot consume same authority across a root-approved migration.
 
 Status:
 
@@ -280,11 +290,9 @@ Revocation:
 
 Missing:
 
-- T0/T1/T2 semantics.
-- ONLINE_HIGH_ASSURANCE.
-- BOUNDED_OFFLINE.
-- LOCAL_CELL.
-- revocation race tests.
+- distributed T0/T1/T2 finality race model.
+- fork/partition behavior.
+- revocation race tests against adversarial scheduling.
 
 Status:
 
@@ -319,11 +327,10 @@ UNKNOWN / CONSEQUENCE_UNKNOWN
 
 Missing:
 
-- executable transition from `RESERVED` or `EXECUTING` to `QUARANTINED`.
-- later resolution by evidence.
+- richer later resolution by evidence.
 - `FAILED_PROVEN`.
-- `RELEASED`.
-- no false release on timeout.
+- full receipt reconciliation.
+- no false release on timeout under distributed scheduling.
 
 ## 17. V Capacity Model Status
 
@@ -344,7 +351,7 @@ Missing:
 - lease assignment.
 - production/on-chain capacity ledger.
 - unbonding/race/migration/partial expiration.
-- capacity epoch non-dilution beyond policy pinning.
+- production/on-chain enforcement of capacity epoch non-dilution.
 
 ## 18. V Remove Test Status
 
@@ -362,7 +369,7 @@ IMPLEMENTED_PARTIALLY
 
 ## 19. V Substitute Test Status
 
-Not implemented.
+Partially implemented for RAM-only and V-only substitution in the reference ledger.
 
 Need tests replacing V with A/BTC/USDC/ETH/WRAM/X and asking whether the same accepted profile still validates without changing verifier policy.
 
@@ -542,7 +549,7 @@ PARTIAL
 
 Current tests:
 
-- 43 Node tests.
+- 63 Node tests.
 - exact effect mismatch.
 - nullifier spent.
 - revoked mandate.
@@ -564,6 +571,20 @@ Current tests:
 - ONLINE_HIGH_ASSURANCE revocation freshness.
 - BOUNDED_OFFLINE revocation freshness.
 - LOCAL_CELL expiry and required binding.
+- governance-published H2 kernel rejection.
+- kernel account redirect rejection.
+- kernel ABI mutation rejection.
+- verifier profile hash mutation rejection.
+- finality rule mutation rejection.
+- finalized malicious H2 state rejection.
+- C4 capacity epoch rejection by C1-pinned verifier.
+- cross-epoch V double-backing rejection.
+- admin override rejection.
+- missing canonical authority state returns UNKNOWN.
+- V removal is rejected under the accepted high-assurance profile.
+- A/WRAM/USDC/BTC/TOKEN_X substitution is rejected under the accepted high-assurance profile.
+- missing unique V encumbrance is rejected.
+- generic token-gate profile is rejected.
 
 Good for verifier, first state-machine scaffold and early property testing. Insufficient for high-assurance architecture.
 
@@ -584,7 +605,7 @@ Good for verifier, first state-machine scaffold and early property testing. Insu
 13. later evidence resolves quarantine.
 14. kernel H1/H2 migration.
 15. old/new backend double execution.
-16. capacity epoch dilution.
+16. production/on-chain capacity epoch dilution.
 17. V unbonding/reuse race.
 18. confused deputy adapter.
 19. semantic drift / adapter version change.
@@ -593,7 +614,7 @@ Good for verifier, first state-machine scaffold and early property testing. Insu
 ## 33. Top 10 Thesis Killers Still Unresolved
 
 1. Complete mediation cannot be enforced in meaningful domains.
-2. V can be replaced by arbitrary collateral.
+2. V can be replaced by arbitrary collateral in production.
 3. Canton or bank/HSM stack offers lower-risk institutional alternative.
 4. Privacy cannot coexist with canonical coordination.
 5. Authority state machine amplifies under true concurrency or migration.
@@ -603,7 +624,7 @@ Good for verifier, first state-machine scaffold and early property testing. Insu
 9. Scaling requires every action to globally serialize.
 10. Vaulta/V cannot prove resource-native necessity.
 
-## 34. Exact Next 10 Commits In Dependency Order
+## 34. Exact Next Commits In Dependency Order
 
 1. `docs: add repo gap analysis and evidence ledger`
 2. `spec: define typed effect manifest`
@@ -615,6 +636,8 @@ Good for verifier, first state-machine scaffold and early property testing. Insu
 8. `test: add V remove/substitute/WRAM replacement tests` PARTIAL IN v0.0.3
 9. `spec: define revocation freshness profiles` DONE IN v0.0.5
 10. `formal: add initial TLA+ model for reserve/consume/quarantine` DONE IN v0.0.4
+11. `security: harden verifier against governance capture` DONE IN v0.0.6
+12. `security: add mandatory dependency redline tests` DONE IN v0.0.7
 
 ## 35. Files That Should Be Modified
 
@@ -653,7 +676,9 @@ Do not rewrite working code merely for style.
 - Revocation profile safety.
 - Kernel upgrade non-expansion.
 - Capacity non-duplication across a global ledger.
+- Governance non-expansion under captured governance.
 - V remove/substitute test result.
+- Mandatory canonical state dependency.
 - WRAM replacement test result.
 - At least one concrete complete-mediation adapter model.
 - Privacy architecture sketch.
@@ -680,7 +705,7 @@ Run TLC on the first TLA+ model, expand it to holders/delegation, and model dist
 | Requirement | Existing File / Code | Status | Problem | Security Impact | Required Change | Priority |
 |---|---|---|---|---|---|---|
 | Trust-boundary separation | `docs/ARCHITECTURE_BASELINE.md` | IMPLEMENTED_PARTIALLY | docs only | prevents conceptual confusion but not code bugs | keep and expand | P1 |
-| Canonical kernel identity | `src/verifier.js`, `fixtures.js` | IMPLEMENTED_PARTIALLY | no ABI hash/finality/migration policy | old/new kernel trust risk | add `SecurityProfile` object | P1 |
+| Canonical kernel identity | `src/verifier.js`, `fixtures.js`, `tests/governance-capture.test.js` | IMPLEMENTED_PARTIALLY | no migration policy | old/new kernel trust risk | add `SecurityProfile` object and migration manifest | P1 |
 | Authority state machine | `src/authority-kernel.js`, `tests/authority-properties.test.js`, `models/AuthorityKernel.tla` | IMPLEMENTED_PARTIALLY | reference + draft formal model only | not TLC/model-checked | run TLC and expand model | P0 |
 | Full-context proof binding | `src/verifier.js`, `specs/03` | IMPLEMENTED_PARTIALLY | many fields absent/not checked | substitution risk | add Effect Manifest | P1 |
 | Three proof classes | no separate modules | MISSING | single verifier path | unclear proof responsibilities | split authority/capacity/finality checks | P2 |
@@ -689,7 +714,9 @@ Run TLC on the first TLA+ model, expand it to holders/delegation, and model dist
 | Complete mediation | bypass flag | IMPLEMENTED_PARTIALLY | no adapter model | false high-assurance claim | mock bank gateway | P1 |
 | Consequence evidence | `consequence-kernel.js`, `src/authority-kernel.js` | IMPLEMENTED_PARTIALLY | quarantine exists; resolve path thin | unsafe release unresolved | model receipt resolution | P1 |
 | Capacity conservation | `capacity-kernel.js` | IMPLEMENTED_PARTIALLY | reference ledger only | no production/on-chain enforcement | add contract/kernel binding | P0 |
-| V necessity | `capacity-kernel.js`, `tests/capacity-ledger.test.js` | IMPLEMENTED_PARTIALLY | model rule only | production bypass still possible | prove non-bypass path | P1 |
+| Governance non-expansion | `src/verifier.js`, `tests/governance-capture.test.js`, `docs/GOVERNANCE_CAPTURE_GAP_ANALYSIS.md` | IMPLEMENTED_PARTIALLY | reference-only; real permissions unknown | captured governance may affect liveness and social upgrade pressure | import Vaulta account permissions and model migration | P0 |
+| Mandatory dependency | `src/verifier.js`, `tests/mandatory-dependency.test.js`, `docs/MANDATORY_DEPENDENCY_ANALYSIS.md` | IMPLEMENTED_PARTIALLY | reference-only; no production contracts | bypassed domains lose canonical global authority view | model equivalent-system counterexamples | P0 |
+| V necessity | `capacity-kernel.js`, `tests/capacity-ledger.test.js`, `tests/mandatory-dependency.test.js` | IMPLEMENTED_PARTIALLY | profile rule only | production bypass still possible | prove non-bypass path | P1 |
 | VaultRAM lineage | external audits only | MISSING | not in repo | V-specific case unsupported | import evidence ledger | P2 |
 | Formal methods | `models/AuthorityKernel.tla` | IMPLEMENTED_PARTIALLY | not TLC-checked or complete | high-assurance unsupported | run TLC and expand TLA+ | P1 |
 | Substrate comparison | none | MISSING | Vaulta advantage unproven | strategic overclaim | docs matrix | P2 |

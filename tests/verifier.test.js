@@ -119,7 +119,11 @@ test("revoked mandate is invalid", () => {
 test("stale checkpoint returns STALE", () => {
   const proof = {
     ...baseProof,
-    finalized_checkpoint: { id: "checkpoint:old", time_ms: 1_000 }
+    finalized_checkpoint: {
+      ...baseProof.finalized_checkpoint,
+      id: "checkpoint:old",
+      time_ms: 1_000
+    }
   };
   const result = verify(baseEffect, proof, basePolicy, {
     spent_nullifiers: [],

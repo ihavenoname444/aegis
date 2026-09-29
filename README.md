@@ -47,7 +47,9 @@ Authority cannot resurrect after revocation.
 Capacity cannot be double-backed.
 No receipt does not mean no execution.
 Unknown consequence quarantines authority.
-Valid high-assurance proof requires a valid V-backed capacity certificate.
+High-assurance verification requires canonical authority state.
+Governance capture does not automatically imply expansion of institution-accepted authority.
+Valid high-assurance proof requires a valid uniquely-encumbered V-backed capacity certificate.
 ```
 
 ## Quick Start
@@ -58,6 +60,7 @@ This repository is intentionally dependency-free for the first reference model.
 npm test
 npm run demo:five-rails
 npm run demo:hostile
+npm run demo:dependency
 npm run conformance
 ```
 
@@ -82,7 +85,7 @@ docs/           GitHub upload and development notes
 
 ## Current Status
 
-Version `0.0.5` is a GitHub-ready reference artifact plus a dependency-free verifier, authority state-machine model, V-backed capacity ledger model, revocation freshness profiles, property/interleaving tests and first-pass TLA+ specification.
+Version `0.0.7` is a GitHub-ready reference artifact plus a dependency-free verifier, authority state-machine model, V-backed capacity ledger model, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, property/interleaving tests and first-pass TLA+ specification.
 
 The first target artifacts are:
 
@@ -91,6 +94,9 @@ five-rails authority amplification demo
 10,000 -> 10,001 hostile amplification demo
 global V capacity non-double-backing tests
 ONLINE / bounded-offline / local-cell revocation profile tests
+hostile governance / malicious kernel / capacity dilution tests
+mandatory dependency / V substitute / canonical-state tests
+mandatory dependency executable demo
 seeded property tests for authority conservation
 first TLA+ conservation model
 ```
@@ -99,6 +105,7 @@ Security review status:
 
 - `docs/CURRENT_REPO_GAP_ANALYSIS.md` is the current adversarial architecture audit.
 - `docs/EVIDENCE_LEDGER.md` tracks which claims are tested, assumed, unproven or contradicted.
+- `docs/MANDATORY_DEPENDENCY_ANALYSIS.md` defines the exact guarantee that disappears when AEGIS-V is bypassed.
 
 ## Demo Output
 
@@ -139,9 +146,20 @@ Capacity ledger tests:
 
 ```text
 V cannot be double-backed across live certificates.
+High-assurance capacity requires the accepted AEGIS-V capacity profile.
+A, WRAM, USDC, BTC and TOKEN_X cannot substitute for V under that profile.
 RAM cannot substitute for missing V.
 V cannot substitute for missing physical RAM backing.
 Retired certificates release provider capacity.
+```
+
+Mandatory dependency tests:
+
+```text
+No canonical authority state => UNKNOWN / CANONICAL_STATE_REQUIRED.
+No V encumbrance => INVALID / V_REQUIRED.
+No unique V encumbrance => INVALID / UNIQUE_V_ENCUMBRANCE_REQUIRED.
+Substitute capacity assets => INVALID / CAPACITY_ASSET_REJECTED.
 ```
 
 Revocation freshness profiles:
@@ -153,6 +171,19 @@ LOCAL_CELL requires an unexpired local authority cell.
 Known revoked mandates fail closed in all profiles.
 ```
 
+Governance-capture hardening:
+
+```text
+H2 kernel is rejected unless explicitly accepted.
+Kernel account redirect is rejected.
+Kernel ABI mutation is rejected.
+Verifier profile mutation is rejected.
+Finality rule mutation is rejected.
+New capacity epoch C4 is rejected unless explicitly accepted.
+Finalized malicious H2 state is rejected despite valid finality.
+Admin override cannot bypass nullifiers or release quarantined authority.
+```
+
 ## Institutional Review Checklist
 
 A skeptical reviewer should be able to verify that this model distinguishes:
@@ -161,6 +192,7 @@ A skeptical reviewer should be able to verify that this model distinguishes:
 - native auth from AEGIS kernel authority;
 - authority validity from capacity sufficiency;
 - finality validity from authority validity;
+- finalized state from accepted authority state;
 - verification from execution;
 - reconciliation from rollback;
 - high-assurance mode from advisory/bypassable mode.

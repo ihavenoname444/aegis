@@ -57,6 +57,7 @@ export const AuthorityReason = Object.freeze({
   OBLIGATION_ALREADY_BOUND: "OBLIGATION_ALREADY_BOUND",
   NULLIFIER_ALREADY_USED: "NULLIFIER_ALREADY_USED",
   RECEIPT_REQUIRED: "RECEIPT_REQUIRED",
+  RESOLUTION_PROOF_REQUIRED: "RESOLUTION_PROOF_REQUIRED",
   UNKNOWN_TRANSITION: "UNKNOWN_TRANSITION"
 });
 
@@ -224,6 +225,9 @@ function returnAuthority(state, transition) {
   if (!reservation) return fail(AuthorityReason.RESERVATION_NOT_FOUND);
   if (!["RESERVED", "QUARANTINED"].includes(reservation.status)) {
     return fail(AuthorityReason.RESERVATION_NOT_ACTIVE);
+  }
+  if (reservation.status === "QUARANTINED" && !transition.resolution_proof_id) {
+    return fail(AuthorityReason.RESOLUTION_PROOF_REQUIRED);
   }
 
   const holder = state.holders[reservation.holder_id];

@@ -2,8 +2,24 @@ export function validateCapacityCertificate(proof, policy) {
   const cert = proof.capacity_certificate;
   if (!cert) return { ok: false, reason: "CAPACITY_MISSING" };
 
+  if (cert.capacity_profile !== policy.accepted_capacity_profile) {
+    return { ok: false, reason: "CAPACITY_PROFILE_REJECTED" };
+  }
+
+  if (cert.capacity_asset !== policy.accepted_capacity_asset) {
+    return { ok: false, reason: "CAPACITY_ASSET_REJECTED" };
+  }
+
   if (!policy.accepted_capacity_epochs.includes(cert.capacity_epoch)) {
     return { ok: false, reason: "CAPACITY_EPOCH_REJECTED" };
+  }
+
+  if (cert.unique_v_encumbrance !== true) {
+    return { ok: false, reason: "UNIQUE_V_ENCUMBRANCE_REQUIRED" };
+  }
+
+  if (!isPositive(cert.v_locked) || !isPositive(cert.v_encumbered)) {
+    return { ok: false, reason: "V_REQUIRED" };
   }
 
   if (cert.v_encumbered > cert.v_locked) {
@@ -42,6 +58,7 @@ export function registerCapacityProvider(ledger, provider) {
 
   next.providers[provider.provider_id] = {
     provider_id: provider.provider_id,
+    capacity_asset: provider.capacity_asset,
     v_locked: provider.v_locked,
     ram_committed_bytes: provider.ram_committed_bytes,
     acu_limit: provider.acu_limit,
@@ -59,7 +76,10 @@ export function issueCapacityCertificate(ledger, certificate) {
   next.certificates[certificate.certificate_id] = {
     certificate_id: certificate.certificate_id,
     provider_id: certificate.provider_id,
+    capacity_profile: certificate.capacity_profile,
+    capacity_asset: certificate.capacity_asset,
     capacity_epoch: certificate.capacity_epoch,
+    unique_v_encumbrance: certificate.unique_v_encumbrance,
     v_encumbered: certificate.v_encumbered,
     ram_committed_bytes: certificate.ram_committed_bytes,
     active_acu: certificate.active_acu,
@@ -95,6 +115,7 @@ export function capacityLedgerReport(ledger) {
 
     return {
       provider_id: provider.provider_id,
+      capacity_asset: provider.capacity_asset,
       v_locked: provider.v_locked,
       v_encumbered,
       v_available: provider.v_locked - v_encumbered,
@@ -126,6 +147,14 @@ function validateLedgerCertificate(ledger, certificate) {
   const provider = ledger.providers[certificate.provider_id];
   if (!provider || provider.status !== "ACTIVE") {
     return { ok: false, reason: "CAPACITY_PROVIDER_MISSING" };
+  }
+
+  if (certificate.capacity_asset !== provider.capacity_asset || certificate.capacity_asset !== "V") {
+    return { ok: false, reason: "CAPACITY_ASSET_REJECTED" };
+  }
+
+  if (certificate.unique_v_encumbrance !== true) {
+    return { ok: false, reason: "UNIQUE_V_ENCUMBRANCE_REQUIRED" };
   }
 
   if (!isPositive(certificate.v_encumbered)) {
@@ -160,6 +189,7 @@ function validateLedgerCertificate(ledger, certificate) {
 
 function validateProvider(provider) {
   if (!provider?.provider_id) return { ok: false, reason: "CAPACITY_PROVIDER_MISSING" };
+  if (provider.capacity_asset !== "V") return { ok: false, reason: "CAPACITY_ASSET_REJECTED" };
   if (!isNonNegative(provider.v_locked)) return { ok: false, reason: "INVALID_V_LOCK" };
   if (!isNonNegative(provider.ram_committed_bytes)) {
     return { ok: false, reason: "INVALID_RAM_COMMITMENT" };

@@ -9,6 +9,7 @@ network_id
 profile_version
 kernel_account
 kernel_code_hash
+kernel_abi_hash
 authority_schema_hash
 verifier_profile_hash
 root_identity
@@ -33,6 +34,8 @@ revocation_checkpoint
 capacity_certificate_id
 capacity_epoch
 finalized_state_reference
+finality_rule
+finalized_kernel_hash
 evidence_class
 consequence_policy
 proof_version
@@ -41,3 +44,32 @@ crypto_suite
 
 If any exact-effect field differs from the requested effect, verifier returns `INVALID`.
 
+## Verifier Sovereignty Bindings
+
+A verifier must explicitly accept:
+
+```text
+network_id
+kernel_account
+kernel_code_hash
+kernel_abi_hash
+verifier_profile_hash
+authority_schema_hash
+proof_version
+capacity_epoch
+finality_rule
+```
+
+Finality proves that a state was finalized under some rule. It does not prove that the verifier accepts the authority semantics of that state.
+
+Required check:
+
+```text
+Finality Validity
+AND
+Profile Acceptance
+AND
+Authority Validity
+AND
+Capacity Validity
+```

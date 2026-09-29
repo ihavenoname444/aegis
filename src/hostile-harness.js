@@ -131,7 +131,11 @@ function run(state, results, transition) {
 function runProofAttacks() {
   const stale = verify(baseEffect, {
     ...baseProof,
-    finalized_checkpoint: { id: "checkpoint:stale", time_ms: 1_000 }
+    finalized_checkpoint: {
+      ...baseProof.finalized_checkpoint,
+      id: "checkpoint:stale",
+      time_ms: 1_000
+    }
   }, basePolicy, { spent_nullifiers: [], revoked_mandates: [] });
 
   const oldCapacity = verify(baseEffect, {

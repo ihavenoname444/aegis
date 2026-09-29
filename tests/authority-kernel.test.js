@@ -111,6 +111,15 @@ test("hostile 10000 to 10001 harness rejects amplification", () => {
   assert.equal(demo.summary.same_obligation_successes, 1);
   assert.equal(demo.summary.extra_10001_attempts_rejected, 2);
   assert.equal(demo.summary.proof_attacks_rejected, true);
+  assert.deepEqual(demo.proof_attacks, [
+    { attack: "stale-proof", status: "STALE", reason: "STALE_CHECKPOINT" },
+    {
+      attack: "old-capacity-certificate",
+      status: "INVALID",
+      reason: "CAPACITY_EPOCH_REJECTED"
+    },
+    { attack: "revoked-mandate-race", status: "INVALID", reason: "MANDATE_REVOKED" }
+  ]);
   assert.equal(demo.final_report.available, 0);
   assert.equal(demo.final_report.quarantined, 10);
   assert.equal(demo.final_report.reserved, 9_990);

@@ -4,21 +4,51 @@ import { validateCapacityCertificate } from "./capacity-kernel.js";
 import { consequencePolicy } from "./consequence-kernel.js";
 import { evaluateRevocation } from "./revocation-policy.js";
 
-export function verify(effect, proof, policy, state = defaultState()) {
+export function verify(effect, proof, policy, state) {
   if (policy.accepted_network_id !== proof.network_id) {
     return invalid(Reason.NETWORK_REJECTED);
   }
 
+  if (policy.canonical_authority_state_required && !state) {
+    return { status: Status.UNKNOWN, reason: Reason.CANONICAL_STATE_REQUIRED };
+  }
+
+  const verifiedState = state ?? defaultState();
+
   if (!policy.accepted_profile_versions.includes(proof.profile_version)) {
     return invalid(Reason.PROFILE_REJECTED);
+  }
+
+  if (policy.accepted_verifier_profile_hashes
+    && !policy.accepted_verifier_profile_hashes.includes(proof.verifier_profile_hash)) {
+    return invalid(Reason.PROFILE_HASH_REJECTED);
+  }
+
+  if (policy.accepted_kernel_account && policy.accepted_kernel_account !== proof.kernel_account) {
+    return invalid(Reason.KERNEL_ACCOUNT_REJECTED);
   }
 
   if (!policy.accepted_kernel_hashes.includes(proof.kernel_code_hash)) {
     return invalid(Reason.KERNEL_REJECTED);
   }
 
+  if (policy.accepted_kernel_abi_hashes
+    && !policy.accepted_kernel_abi_hashes.includes(proof.kernel_abi_hash)) {
+    return invalid(Reason.KERNEL_ABI_REJECTED);
+  }
+
   if (!policy.accepted_authority_schema_hashes.includes(proof.authority_schema_hash)) {
     return invalid(Reason.SCHEMA_REJECTED);
+  }
+
+  if (policy.accepted_finality_rules
+    && !policy.accepted_finality_rules.includes(proof.finalized_checkpoint.finality_rule)) {
+    return invalid(Reason.FINALITY_RULE_REJECTED);
+  }
+
+  if (proof.finalized_checkpoint.kernel_code_hash
+    && !policy.accepted_kernel_hashes.includes(proof.finalized_checkpoint.kernel_code_hash)) {
+    return invalid(Reason.FINALIZED_KERNEL_REJECTED);
   }
 
   if (!policy.accepted_proof_versions.includes(proof.proof_version)) {
@@ -33,6 +63,10 @@ export function verify(effect, proof, policy, state = defaultState()) {
     return invalid(Reason.INCOMPLETE_MEDIATION);
   }
 
+  if (proof.admin_override_authority_state) {
+    return invalid(Reason.ADMIN_OVERRIDE_REJECTED);
+  }
+
   if (!effectMatchesProof(effect, proof)) {
     return invalid(Reason.EFFECT_MISMATCH);
   }
@@ -45,10 +79,10 @@ export function verify(effect, proof, policy, state = defaultState()) {
     return { status: Status.STALE, reason: Reason.STALE_CHECKPOINT };
   }
 
-  const revocation = evaluateRevocation(proof, policy, state);
+  const revocation = evaluateRevocation(proof, policy, verifiedState);
   if (!revocation.ok) return { status: revocation.status, reason: revocation.reason };
 
-  if (isNullifierSpent(proof, state)) {
+  if (isNullifierSpent(proof, verifiedState)) {
     return invalid(Reason.NULLIFIER_SPENT);
   }
 

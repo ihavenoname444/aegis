@@ -64,7 +64,14 @@ export function fiveRailScenarios() {
       name: "05 stale checkpoint",
       claim: "Verifier sovereignty enforces freshness",
       effect: baseEffect,
-      proof: { ...baseProof, finalized_checkpoint: { id: "checkpoint:old", time_ms: 1_000 } },
+      proof: {
+        ...baseProof,
+        finalized_checkpoint: {
+          ...baseProof.finalized_checkpoint,
+          id: "checkpoint:old",
+          time_ms: 1_000
+        }
+      },
       policy: basePolicy,
       state: cleanState,
       expected: "STALE"
@@ -138,4 +145,3 @@ export function fiveRailScenarios() {
     }
   ];
 }
-
