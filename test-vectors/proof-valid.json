@@ -1,0 +1,50 @@
+{
+  "network_id": "vaulta-test-model",
+  "profile_version": "AEGIS-V-0",
+  "kernel_account": "aegis.auth",
+  "kernel_code_hash": "kernel:H1",
+  "authority_schema_hash": "schema:S1",
+  "verifier_profile_hash": "profile:P1",
+  "root_identity": "bank-root:example",
+  "mandate_id": "mandate:M1",
+  "mandate_version": 1,
+  "delegation_lineage": ["bank-root:example", "agent:treasury-bot"],
+  "delegated_permission": "pay.invoice",
+  "effect": {
+    "effect_type": "PAYMENT",
+    "action": "TRANSFER",
+    "recipient": "merchant.bank.example",
+    "execution_domain": "BANK_RAIL",
+    "asset": "USD",
+    "amount": 100,
+    "parameters_commitment": "sha256:4b4a4a7ff61ec27bba273c6b498d9915763881caa8ee35e0ec30d745e6413ffc"
+  },
+  "obligation_id": "obligation:O1",
+  "reservation_id": "reservation:R1",
+  "nonce": "nonce:N1",
+  "nullifier": "nullifier:N1",
+  "issue_checkpoint": 9000,
+  "expiry": 20000,
+  "revocation_checkpoint": 8000,
+  "finalized_checkpoint": {
+    "id": "checkpoint:F1",
+    "time_ms": 9500
+  },
+  "capacity_certificate": {
+    "certificate_id": "cert:CERT1",
+    "capacity_epoch": "C1",
+    "v_locked": 100,
+    "v_encumbered": 100,
+    "ram_committed_bytes": 1024,
+    "acu_limit": 100,
+    "active_acu": 100,
+    "status": "ACTIVE"
+  },
+  "evidence_class": "B",
+  "consequence": {
+    "status": "PENDING"
+  },
+  "proof_version": "proof-v0",
+  "crypto_suite": "model-sha256-v0",
+  "agent_has_bypass_credential": false
+}

@@ -1,0 +1,22 @@
+{
+  "name": "aegis-v-reference",
+  "version": "0.0.5",
+  "private": true,
+  "description": "Reference model and verifier for conserved autonomous authority.",
+  "type": "module",
+  "scripts": {
+    "demo:five-rails": "node src/demo.js",
+    "demo:hostile": "node src/hostile-demo.js",
+    "conformance": "npm test && npm run demo:five-rails && npm run demo:hostile",
+    "test": "node --test tests/*.test.js",
+    "verify": "node src/cli.js"
+  },
+  "keywords": [
+    "aegis-v",
+    "autonomous-authority",
+    "authority-clearing",
+    "vaulta",
+    "verifier"
+  ],
+  "license": "MIT"
+}

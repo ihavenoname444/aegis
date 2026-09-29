@@ -1,0 +1,15 @@
+{
+  "accepted_network_id": "vaulta-test-model",
+  "accepted_profile_versions": ["AEGIS-V-0"],
+  "accepted_kernel_hashes": ["kernel:H1"],
+  "accepted_authority_schema_hashes": ["schema:S1"],
+  "accepted_capacity_epochs": ["C1"],
+  "accepted_proof_versions": ["proof-v0"],
+  "accepted_evidence_classes": ["A", "B"],
+  "complete_mediation_required": true,
+  "minimum_ram_committed_bytes": 1024,
+  "maximum_checkpoint_age_ms": 3000,
+  "now_ms": 10000,
+  "unknown_consequence": "QUARANTINE"
+}
+

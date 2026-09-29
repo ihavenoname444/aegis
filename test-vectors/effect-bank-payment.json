@@ -1,0 +1,10 @@
+{
+  "effect_type": "PAYMENT",
+  "action": "TRANSFER",
+  "recipient": "merchant.bank.example",
+  "execution_domain": "BANK_RAIL",
+  "asset": "USD",
+  "amount": 100,
+  "parameters_commitment": "sha256:4b4a4a7ff61ec27bba273c6b498d9915763881caa8ee35e0ec30d745e6413ffc"
+}
+
