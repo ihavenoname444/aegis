@@ -99,6 +99,179 @@ test("same obligation cannot reserve across five rails", () => {
   assert.equal(conservationReport(state).conserved, true);
 });
 
+test("reservation without a nullifier is rejected", () => {
+  let state = createAuthorityState({ root_id: "root", root_authorized: 10 });
+  state = applyTransition(state, {
+    type: Transition.DELEGATE,
+    from: "root",
+    to: "agent:1",
+    amount: 10
+  }).state;
+
+  const result = applyTransition(state, {
+    type: Transition.RESERVE,
+    reservation_id: "reservation:no-nullifier",
+    obligation_id: "obligation:no-nullifier",
+    holder_id: "agent:1",
+    amount: 10,
+    effect_id: "effect:no-nullifier",
+    execution_domain: "BANK_RAIL"
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "INVALID_RESERVATION_BINDING");
+  assert.equal(conservationReport(result.state).available, 10);
+  assert.equal(conservationReport(result.state).reserved, 0);
+  assert.equal(conservationReport(result.state).conserved, true);
+});
+
+test("reservation with blank binding fields is rejected", () => {
+  let state = createAuthorityState({ root_id: "root", root_authorized: 10 });
+  state = applyTransition(state, {
+    type: Transition.DELEGATE,
+    from: "root",
+    to: "agent:1",
+    amount: 10
+  }).state;
+
+  const result = applyTransition(state, {
+    type: Transition.RESERVE,
+    reservation_id: "reservation:blank-domain",
+    obligation_id: "obligation:blank-domain",
+    nullifier: "nullifier:blank-domain",
+    holder_id: "agent:1",
+    amount: 10,
+    effect_id: "effect:blank-domain",
+    execution_domain: " "
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "INVALID_RESERVATION_BINDING");
+  assert.equal(conservationReport(result.state).reserved, 0);
+  assert.equal(conservationReport(result.state).conserved, true);
+});
+
+test("stale base-sequence reserve proposal is rejected", () => {
+  let state = createAuthorityState({ root_id: "root", root_authorized: 10 });
+  state = applyTransition(state, {
+    type: Transition.DELEGATE,
+    from: "root",
+    to: "agent:1",
+    amount: 10
+  }).state;
+
+  const baseSequence = state.sequence;
+  const first = applyTransition(state, {
+    type: Transition.RESERVE,
+    base_sequence: baseSequence,
+    reservation_id: "reservation:first",
+    obligation_id: "obligation:first",
+    nullifier: "nullifier:first",
+    holder_id: "agent:1",
+    amount: 5,
+    effect_id: "effect:first",
+    execution_domain: "BANK_RAIL"
+  });
+  state = first.state;
+
+  const second = applyTransition(state, {
+    type: Transition.RESERVE,
+    base_sequence: baseSequence,
+    reservation_id: "reservation:stale",
+    obligation_id: "obligation:stale",
+    nullifier: "nullifier:stale",
+    holder_id: "agent:1",
+    amount: 5,
+    effect_id: "effect:stale",
+    execution_domain: "ETHEREUM"
+  });
+
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, false);
+  assert.equal(second.reason, "STALE_STATE");
+  assert.equal(conservationReport(second.state).available, 5);
+  assert.equal(conservationReport(second.state).reserved, 5);
+  assert.equal(conservationReport(second.state).conserved, true);
+});
+
+test("non-integer base-sequence reserve proposal is rejected", () => {
+  let state = createAuthorityState({ root_id: "root", root_authorized: 10 });
+  state = applyTransition(state, {
+    type: Transition.DELEGATE,
+    from: "root",
+    to: "agent:1",
+    amount: 10
+  }).state;
+
+  const result = applyTransition(state, {
+    type: Transition.RESERVE,
+    base_sequence: String(state.sequence),
+    reservation_id: "reservation:string-sequence",
+    obligation_id: "obligation:string-sequence",
+    nullifier: "nullifier:string-sequence",
+    holder_id: "agent:1",
+    amount: 5,
+    effect_id: "effect:string-sequence",
+    execution_domain: "BANK_RAIL"
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "STALE_STATE");
+  assert.equal(conservationReport(result.state).reserved, 0);
+  assert.equal(conservationReport(result.state).conserved, true);
+});
+
+test("sequenced authority state rejects authority-moving transition without base_sequence", () => {
+  const state = createAuthorityState({
+    root_id: "root",
+    root_authorized: 10,
+    require_base_sequence: true
+  });
+
+  const result = applyTransition(state, {
+    type: Transition.DELEGATE,
+    from: "root",
+    to: "agent:1",
+    amount: 5
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "BASE_SEQUENCE_REQUIRED");
+  assert.equal(conservationReport(result.state).available, 10);
+  assert.equal(conservationReport(result.state).conserved, true);
+});
+
+test("sequenced authority state rejects reserve without base_sequence", () => {
+  let state = createAuthorityState({
+    root_id: "root",
+    root_authorized: 10,
+    require_base_sequence: true
+  });
+  state = applyTransition(state, {
+    type: Transition.DELEGATE,
+    base_sequence: state.sequence,
+    from: "root",
+    to: "agent:1",
+    amount: 5
+  }).state;
+
+  const result = applyTransition(state, {
+    type: Transition.RESERVE,
+    reservation_id: "reservation:missing-base",
+    obligation_id: "obligation:missing-base",
+    nullifier: "nullifier:missing-base",
+    holder_id: "agent:1",
+    amount: 5,
+    effect_id: "effect:missing-base",
+    execution_domain: "BANK_RAIL"
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "BASE_SEQUENCE_REQUIRED");
+  assert.equal(conservationReport(result.state).reserved, 0);
+  assert.equal(conservationReport(result.state).conserved, true);
+});
+
 test("hostile 10000 to 10001 harness rejects amplification", () => {
   const demo = runHostile10001Demo();
 
