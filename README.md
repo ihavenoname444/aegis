@@ -22,8 +22,8 @@ Show that, given accepted verifier endpoints, delegated authority cannot amplify
 Canonical demo:
 
 ```text
-Root authority = 100
-Agent attempts to spend/use the same authority across five rails
+Root authority = 10,000
+Attacker attempts to make autonomous authority become 10,001
 AEGIS-V accepts only exact, fresh, capacity-backed, non-replayed authority
 Final accounting remains conserved
 ```
@@ -50,6 +50,11 @@ Unknown consequence quarantines authority.
 High-assurance verification requires canonical authority state.
 Governance capture does not automatically imply expansion of institution-accepted authority.
 Valid high-assurance proof requires a valid uniquely-encumbered V-backed capacity certificate.
+Multi-principal approvals activate one conserved root; they do not copy authority.
+Recovery/re-binding cannot activate a second root for the same principal or legal attestation.
+Reservations require complete, non-blank authority-binding fields.
+Transitions with explicit base_sequence fail closed against stale state.
+Sequenced authority states require base_sequence on authority-moving transitions.
 ```
 
 ## Quick Start
@@ -61,6 +66,7 @@ npm test
 npm run demo:five-rails
 npm run demo:hostile
 npm run demo:dependency
+npm run demo:institutional
 npm run conformance
 ```
 
@@ -85,7 +91,7 @@ docs/           GitHub upload and development notes
 
 ## Current Status
 
-Version `0.0.7` is a GitHub-ready reference artifact plus a dependency-free verifier, authority state-machine model, V-backed capacity ledger model, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, property/interleaving tests and first-pass TLA+ specification.
+Version `0.0.13` is a GitHub-ready reference artifact plus a dependency-free verifier, authority state-machine model, V-backed capacity ledger model, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, institutional assurance profiles, multi-principal root-binding hardening, recovery/re-binding non-expansion checks, reservation-binding completeness checks, stale base-sequence rejection, sequenced-mode base-sequence enforcement, property/interleaving tests and first-pass TLA+ specifications.
 
 The first target artifacts are:
 
@@ -97,8 +103,14 @@ ONLINE / bounded-offline / local-cell revocation profile tests
 hostile governance / malicious kernel / capacity dilution tests
 mandatory dependency / V substitute / canonical-state tests
 mandatory dependency executable demo
+institutional bank / central-bank / market-infrastructure policy profiles
+multi-principal root-binding / conserved activation tests
+recovery re-binding / principal-alias non-expansion tests
+reservation binding completeness tests
+stale base-sequence reservation rejection tests
+sequenced-mode base-sequence-required tests
 seeded property tests for authority conservation
-first TLA+ conservation model
+first TLA+ conservation models
 ```
 
 Security review status:
@@ -106,6 +118,9 @@ Security review status:
 - `docs/CURRENT_REPO_GAP_ANALYSIS.md` is the current adversarial architecture audit.
 - `docs/EVIDENCE_LEDGER.md` tracks which claims are tested, assumed, unproven or contradicted.
 - `docs/MANDATORY_DEPENDENCY_ANALYSIS.md` defines the exact guarantee that disappears when AEGIS-V is bypassed.
+- `docs/INSTITUTIONAL_READINESS.md` frames the reference model for regulated institutional review.
+- `docs/COMPOSITION_MODEL.md` defines the first module-composition safety model.
+- `docs/THESIS_KILLERS.md` tracks the highest-risk falsification tests.
 
 ## Demo Output
 
@@ -184,11 +199,36 @@ Finalized malicious H2 state is rejected despite valid finality.
 Admin override cannot bypass nullifiers or release quarantined authority.
 ```
 
+Institutional readiness profiles:
+
+```text
+TIER1_BANK_HIGH_VALUE: requires canonical state, complete mediation, pinned kernel/profile/finality and V-backed capacity.
+CENTRAL_BANK_SYSTEMIC: adds evidence class A, <=1000ms checkpoint age and online revocation.
+MARKET_INFRASTRUCTURE_INTEROP: accepts bounded or online revocation with tighter freshness.
+Advisory AI policy attempting high-assurance: FAIL.
+```
+
+Root-binding / composition hardening:
+
+```text
+2-of-3 treasury plus risk approval activates one institutional root.
+Threshold signers do not each become independent roots.
+Authorization above the institutional root is rejected.
+Separation-of-duties can be enforced across roles.
+Hidden emergency master key activation is rejected.
+Recovery re-binding under a new root_id is rejected for the same principal.
+Principal aliases cannot reuse the same legal attestation to create a second root.
+Reservations without a nullifier or with blank binding fields are rejected.
+Reservations built against stale or type-forged base_sequence values are rejected.
+Sequenced states reject authority-moving transitions without base_sequence.
+```
+
 ## Institutional Review Checklist
 
 A skeptical reviewer should be able to verify that this model distinguishes:
 
 - root authority from Vaulta account authority;
+- multi-principal approval from duplicated authority;
 - native auth from AEGIS kernel authority;
 - authority validity from capacity sufficiency;
 - finality validity from authority validity;
@@ -196,6 +236,7 @@ A skeptical reviewer should be able to verify that this model distinguishes:
 - verification from execution;
 - reconciliation from rollback;
 - high-assurance mode from advisory/bypassable mode.
+- institutional policy gates from protocol marketing claims.
 
 ## Why This Exists
 
