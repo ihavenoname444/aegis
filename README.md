@@ -25,6 +25,7 @@ Canonical demo:
 Root authority = 10,000
 Attacker attempts to make autonomous authority become 10,001
 AEGIS-V accepts only exact, fresh, capacity-backed, non-replayed authority
+Proofs must resolve into one accepted authority universe and one global authority root
 Final accounting remains conserved
 ```
 
@@ -41,6 +42,7 @@ Final accounting remains conserved
 
 ```text
 Authority cannot amplify.
+Authority cannot fork.
 Authority cannot replay.
 Authority cannot exceed scope.
 Authority cannot resurrect after revocation.
@@ -48,13 +50,17 @@ Capacity cannot be double-backed.
 No receipt does not mean no execution.
 Unknown consequence quarantines authority.
 High-assurance verification requires canonical authority state.
+High-assurance verification requires an accepted authority universe, global authority root and authority-state checkpoint root.
 Governance capture does not automatically imply expansion of institution-accepted authority.
 Valid high-assurance proof requires a valid uniquely-encumbered V-backed capacity certificate.
 Multi-principal approvals activate one conserved root; they do not copy authority.
 Recovery/re-binding cannot activate a second root for the same principal or legal attestation.
 Reservations require complete, non-blank authority-binding fields.
+Return/release evidence must match the original reservation binding.
 Transitions with explicit base_sequence fail closed against stale state.
 Sequenced authority states require base_sequence on authority-moving transitions.
+Failed proposals do not advance canonical authority sequence.
+Every attempted transition has a unique monotonic audit sequence.
 ```
 
 ## Quick Start
@@ -91,7 +97,7 @@ docs/           GitHub upload and development notes
 
 ## Current Status
 
-Version `0.0.13` is a GitHub-ready reference artifact plus a dependency-free verifier, authority state-machine model, V-backed capacity ledger model, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, institutional assurance profiles, multi-principal root-binding hardening, recovery/re-binding non-expansion checks, reservation-binding completeness checks, stale base-sequence rejection, sequenced-mode base-sequence enforcement, property/interleaving tests and first-pass TLA+ specifications.
+Version `0.0.17` is a GitHub-ready reference artifact plus a dependency-free verifier, authority universe binding, authority non-equivocation adversarial tests, authority state-machine model, V-backed capacity ledger model, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, institutional assurance profiles, multi-principal root-binding hardening, recovery/re-binding non-expansion checks, reservation-binding completeness checks, return-binding mismatch rejection, failed-proposal sequence no-op hardening, unique audit-attempt ordering, stale base-sequence rejection, sequenced-mode base-sequence enforcement, property/interleaving tests and first-pass TLA+ specifications.
 
 The first target artifacts are:
 
@@ -104,9 +110,13 @@ hostile governance / malicious kernel / capacity dilution tests
 mandatory dependency / V substitute / canonical-state tests
 mandatory dependency executable demo
 institutional bank / central-bank / market-infrastructure policy profiles
+authority universe / global authority root / checkpoint-root non-equivocation tests
 multi-principal root-binding / conserved activation tests
 recovery re-binding / principal-alias non-expansion tests
 reservation binding completeness tests
+return-binding mismatch rejection tests
+failed-proposal sequence no-op tests
+unique audit-attempt ordering tests
 stale base-sequence reservation rejection tests
 sequenced-mode base-sequence-required tests
 seeded property tests for authority conservation
@@ -118,6 +128,7 @@ Security review status:
 - `docs/CURRENT_REPO_GAP_ANALYSIS.md` is the current adversarial architecture audit.
 - `docs/EVIDENCE_LEDGER.md` tracks which claims are tested, assumed, unproven or contradicted.
 - `docs/MANDATORY_DEPENDENCY_ANALYSIS.md` defines the exact guarantee that disappears when AEGIS-V is bypassed.
+- `docs/AUTHORITY_NON_EQUIVOCATION.md` records the current authority-fork theorem, counterexample and V/WRAM substitution result.
 - `docs/INSTITUTIONAL_READINESS.md` frames the reference model for regulated institutional review.
 - `docs/COMPOSITION_MODEL.md` defines the first module-composition safety model.
 - `docs/THESIS_KILLERS.md` tracks the highest-risk falsification tests.
@@ -172,6 +183,9 @@ Mandatory dependency tests:
 
 ```text
 No canonical authority state => UNKNOWN / CANONICAL_STATE_REQUIRED.
+Wrong authority universe => INVALID / AUTHORITY_UNIVERSE_REJECTED.
+Wrong global authority root => INVALID / GLOBAL_AUTHORITY_ROOT_REJECTED.
+Forked checkpoint root => INVALID / AUTHORITY_HISTORY_EQUIVOCATED.
 No V encumbrance => INVALID / V_REQUIRED.
 No unique V encumbrance => INVALID / UNIQUE_V_ENCUMBRANCE_REQUIRED.
 Substitute capacity assets => INVALID / CAPACITY_ASSET_REJECTED.
@@ -202,7 +216,7 @@ Admin override cannot bypass nullifiers or release quarantined authority.
 Institutional readiness profiles:
 
 ```text
-TIER1_BANK_HIGH_VALUE: requires canonical state, complete mediation, pinned kernel/profile/finality and V-backed capacity.
+TIER1_BANK_HIGH_VALUE: requires canonical state, authority non-equivocation, complete mediation, pinned kernel/profile/finality and V-backed capacity.
 CENTRAL_BANK_SYSTEMIC: adds evidence class A, <=1000ms checkpoint age and online revocation.
 MARKET_INFRASTRUCTURE_INTEROP: accepts bounded or online revocation with tighter freshness.
 Advisory AI policy attempting high-assurance: FAIL.
@@ -219,6 +233,9 @@ Hidden emergency master key activation is rejected.
 Recovery re-binding under a new root_id is rejected for the same principal.
 Principal aliases cannot reuse the same legal attestation to create a second root.
 Reservations without a nullifier or with blank binding fields are rejected.
+Return/release evidence with mismatched holder, obligation, nullifier, amount, effect or execution domain is rejected.
+Failed proposals do not burn or advance canonical authority sequence.
+Accepted and rejected attempts remain forensically ordered by attempt_sequence.
 Reservations built against stale or type-forged base_sequence values are rejected.
 Sequenced states reject authority-moving transitions without base_sequence.
 ```
@@ -228,6 +245,7 @@ Sequenced states reject authority-moving transitions without base_sequence.
 A skeptical reviewer should be able to verify that this model distinguishes:
 
 - root authority from Vaulta account authority;
+- one canonical authority universe from isolated local authorization;
 - multi-principal approval from duplicated authority;
 - native auth from AEGIS kernel authority;
 - authority validity from capacity sufficiency;

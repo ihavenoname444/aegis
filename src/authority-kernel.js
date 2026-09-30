@@ -55,6 +55,7 @@ export const AuthorityReason = Object.freeze({
   RESERVATION_NOT_FOUND: "RESERVATION_NOT_FOUND",
   RESERVATION_NOT_ACTIVE: "RESERVATION_NOT_ACTIVE",
   INVALID_RESERVATION_BINDING: "INVALID_RESERVATION_BINDING",
+  RESERVATION_BINDING_MISMATCH: "RESERVATION_BINDING_MISMATCH",
   BASE_SEQUENCE_REQUIRED: "BASE_SEQUENCE_REQUIRED",
   STALE_STATE: "STALE_STATE",
   OBLIGATION_ALREADY_BOUND: "OBLIGATION_ALREADY_BOUND",
@@ -86,6 +87,7 @@ export function createAuthorityState({ root_id = "root", root_authorized, requir
     spent_nullifiers: [],
     trace: [],
     sequence: 0,
+    attempt_sequence: 0,
     require_base_sequence
   };
 }
@@ -96,8 +98,13 @@ export function applyTransition(state, transition) {
   const result = baseSequenceReason === AuthorityReason.OK
     ? applyTransitionToClone(next, transition)
     : fail(baseSequenceReason);
-  const sequence = next.sequence + 1;
+  const sequence = result.ok ? next.sequence + 1 : next.sequence;
+  const currentAttemptSequence = Number.isInteger(next.attempt_sequence)
+    ? next.attempt_sequence
+    : next.trace.length;
+  const attempt_sequence = currentAttemptSequence + 1;
   const traceEntry = {
+    attempt_sequence,
     sequence,
     transition: transition.type,
     ok: result.ok,
@@ -110,6 +117,7 @@ export function applyTransition(state, transition) {
   };
 
   next.sequence = sequence;
+  next.attempt_sequence = attempt_sequence;
   next.trace.push(traceEntry);
 
   return {
@@ -236,6 +244,12 @@ function returnAuthority(state, transition) {
   if (!["RESERVED", "QUARANTINED"].includes(reservation.status)) {
     return fail(AuthorityReason.RESERVATION_NOT_ACTIVE);
   }
+  if (!hasValidReturnBinding(transition)) {
+    return fail(AuthorityReason.INVALID_RESERVATION_BINDING);
+  }
+  if (!returnBindingMatchesReservation(transition, reservation)) {
+    return fail(AuthorityReason.RESERVATION_BINDING_MISMATCH);
+  }
   if (reservation.status === "QUARANTINED" && !transition.resolution_proof_id) {
     return fail(AuthorityReason.RESOLUTION_PROOF_REQUIRED);
   }
@@ -317,6 +331,27 @@ function hasValidReservationBinding(transition) {
     transition.effect_id,
     transition.execution_domain
   ].every(isNonEmptyString);
+}
+
+function hasValidReturnBinding(transition) {
+  return [
+    transition.reservation_id,
+    transition.obligation_id,
+    transition.nullifier,
+    transition.holder_id,
+    transition.effect_id,
+    transition.execution_domain
+  ].every(isNonEmptyString) && isPositiveAmount(transition.amount);
+}
+
+function returnBindingMatchesReservation(transition, reservation) {
+  return transition.reservation_id === reservation.reservation_id
+    && transition.obligation_id === reservation.obligation_id
+    && transition.nullifier === reservation.nullifier
+    && transition.holder_id === reservation.holder_id
+    && transition.amount === reservation.amount
+    && transition.effect_id === reservation.effect_id
+    && transition.execution_domain === reservation.execution_domain;
 }
 
 function validateBaseSequence(state, transition) {

@@ -56,6 +56,17 @@ REVOKE_MANDATE
 
 Each attempted transition produces a trace entry. Failed attempts do not move authority, but they remain in the trace so an auditor can see attempted replay, exhaustion or race behavior.
 
+Each trace entry carries:
+
+```text
+attempt_sequence
+sequence
+```
+
+`attempt_sequence` is the audit-log order and increments for every attempted
+transition. `sequence` is the canonical authority-state version and increments
+only for accepted authority-moving transitions.
+
 ## Reservation Binding
 
 `RESERVE` binds:
@@ -80,12 +91,43 @@ duplicate nullifier
 missing or blank reservation binding fields
 stale base_sequence
 missing base_sequence when sequenced mode requires it
+return binding mismatch
 holder not found
 insufficient available authority
 invalid amount
 ```
 
 This is the minimal mechanism used by the hostile demo to prevent the same economic obligation from being reserved across bank, Ethereum, Solana, x402 and MCP rails.
+
+## Canonical Sequence
+
+`sequence` is the canonical state version, not the audit-log length.
+
+Failed, malformed, stale or rejected proposals do not advance canonical sequence.
+Only accepted transitions that change authority state advance it. This prevents
+an invalid proposal from making a pending valid `base_sequence` proposal stale
+without moving authority.
+
+Rejected proposals still advance `attempt_sequence`. This preserves forensic
+ordering without letting failed proposals mutate canonical authority state.
+
+## Return Binding
+
+`RETURN` must refer to the same reservation binding it releases:
+
+```text
+reservation_id
+obligation_id
+nullifier
+holder_id
+amount
+effect_id
+execution_domain
+```
+
+The reference kernel rejects release attempts with missing return binding fields
+or with a holder, obligation, nullifier, amount, effect or execution-domain
+mismatch against the original reservation.
 
 ## Consequence Rule
 

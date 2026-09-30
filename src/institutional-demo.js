@@ -14,6 +14,10 @@ const centralBankPolicy = {
 const advisoryPolicy = {
   ...basePolicy,
   canonical_authority_state_required: false,
+  authority_non_equivocation_required: false,
+  accepted_authority_universe_id: "",
+  accepted_global_authority_root_id: "",
+  accepted_authority_state_roots: [],
   complete_mediation_required: false,
   accepted_capacity_asset: "USDC",
   unknown_consequence: "ALLOW"
@@ -51,4 +55,4 @@ for (const scenario of scenarios) {
 console.log("");
 console.log("Takeaway: institutions do not need to trust an AI agent's intent.");
 console.log("They can require a local policy profile that pins authority, finality,");
-console.log("capacity, revocation, mediation and fail-closed behavior before execution.");
+console.log("authority universe, capacity, revocation, mediation and fail-closed behavior before execution.");

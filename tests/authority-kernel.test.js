@@ -151,6 +151,80 @@ test("reservation with blank binding fields is rejected", () => {
   assert.equal(conservationReport(result.state).conserved, true);
 });
 
+test("return with mismatched reservation binding is rejected", () => {
+  let state = createAuthorityState({ root_id: "root", root_authorized: 10 });
+  state = applyTransition(state, {
+    type: Transition.DELEGATE,
+    from: "root",
+    to: "agent:1",
+    amount: 10
+  }).state;
+  state = applyTransition(state, {
+    type: Transition.RESERVE,
+    reservation_id: "reservation:return-mismatch",
+    obligation_id: "obligation:return-mismatch",
+    nullifier: "nullifier:return-mismatch",
+    holder_id: "agent:1",
+    amount: 10,
+    effect_id: "effect:bank",
+    execution_domain: "BANK_RAIL"
+  }).state;
+
+  const result = applyTransition(state, {
+    type: Transition.RETURN,
+    reservation_id: "reservation:return-mismatch",
+    obligation_id: "obligation:evil",
+    nullifier: "nullifier:evil",
+    holder_id: "attacker",
+    amount: 10,
+    effect_id: "effect:ethereum",
+    execution_domain: "ETHEREUM"
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "RESERVATION_BINDING_MISMATCH");
+  assert.equal(conservationReport(result.state).available, 0);
+  assert.equal(conservationReport(result.state).reserved, 10);
+  assert.equal(conservationReport(result.state).conserved, true);
+});
+
+test("quarantined return with resolution proof still requires matching binding", () => {
+  let state = createAuthorityState({ root_id: "root", root_authorized: 10 });
+  state = applyTransition(state, {
+    type: Transition.RESERVE,
+    reservation_id: "reservation:quarantine-mismatch",
+    obligation_id: "obligation:quarantine-mismatch",
+    nullifier: "nullifier:quarantine-mismatch",
+    holder_id: "root",
+    amount: 10,
+    effect_id: "effect:bank",
+    execution_domain: "BANK_RAIL"
+  }).state;
+  state = applyTransition(state, {
+    type: Transition.QUARANTINE,
+    reservation_id: "reservation:quarantine-mismatch",
+    reason: "UNKNOWN_CONSEQUENCE"
+  }).state;
+
+  const result = applyTransition(state, {
+    type: Transition.RETURN,
+    reservation_id: "reservation:quarantine-mismatch",
+    obligation_id: "obligation:quarantine-mismatch",
+    nullifier: "nullifier:quarantine-mismatch",
+    holder_id: "root",
+    amount: 9,
+    effect_id: "effect:bank",
+    execution_domain: "BANK_RAIL",
+    resolution_proof_id: "receipt-resolution:wrong-amount"
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "RESERVATION_BINDING_MISMATCH");
+  assert.equal(conservationReport(result.state).quarantined, 10);
+  assert.equal(conservationReport(result.state).available, 0);
+  assert.equal(conservationReport(result.state).conserved, true);
+});
+
 test("stale base-sequence reserve proposal is rejected", () => {
   let state = createAuthorityState({ root_id: "root", root_authorized: 10 });
   state = applyTransition(state, {
@@ -221,6 +295,99 @@ test("non-integer base-sequence reserve proposal is rejected", () => {
   assert.equal(conservationReport(result.state).conserved, true);
 });
 
+test("failed proposal does not advance canonical authority sequence", () => {
+  let state = createAuthorityState({
+    root_id: "root",
+    root_authorized: 10,
+    require_base_sequence: true
+  });
+
+  const failed = applyTransition(state, {
+    type: Transition.RESERVE,
+    base_sequence: state.sequence,
+    reservation_id: "reservation:too-large",
+    obligation_id: "obligation:too-large",
+    nullifier: "nullifier:too-large",
+    holder_id: "root",
+    amount: 11,
+    effect_id: "effect:too-large",
+    execution_domain: "BANK_RAIL"
+  });
+  state = failed.state;
+
+  const valid = applyTransition(state, {
+    type: Transition.RESERVE,
+    base_sequence: 0,
+    reservation_id: "reservation:valid-after-failed",
+    obligation_id: "obligation:valid-after-failed",
+    nullifier: "nullifier:valid-after-failed",
+    holder_id: "root",
+    amount: 10,
+    effect_id: "effect:valid-after-failed",
+    execution_domain: "BANK_RAIL"
+  });
+
+  assert.equal(failed.ok, false);
+  assert.equal(failed.reason, "INSUFFICIENT_AVAILABLE");
+  assert.equal(failed.state.sequence, 0);
+  assert.equal(valid.ok, true);
+  assert.equal(valid.state.sequence, 1);
+  assert.equal(conservationReport(valid.state).reserved, 10);
+  assert.equal(conservationReport(valid.state).conserved, true);
+});
+
+test("rejected attempts have unique monotonic audit order", () => {
+  let state = createAuthorityState({
+    root_id: "root",
+    root_authorized: 10,
+    require_base_sequence: true
+  });
+
+  const tooLarge = applyTransition(state, {
+    type: Transition.RESERVE,
+    base_sequence: 0,
+    reservation_id: "reservation:audit-too-large",
+    obligation_id: "obligation:audit-too-large",
+    nullifier: "nullifier:audit-too-large",
+    holder_id: "root",
+    amount: 11,
+    effect_id: "effect:audit-too-large",
+    execution_domain: "BANK_RAIL"
+  });
+  state = tooLarge.state;
+
+  const missingBase = applyTransition(state, {
+    type: Transition.DELEGATE,
+    from: "root",
+    to: "agent:audit-missing-base",
+    amount: 1
+  });
+  state = missingBase.state;
+
+  const valid = applyTransition(state, {
+    type: Transition.DELEGATE,
+    base_sequence: 0,
+    from: "root",
+    to: "agent:audit-valid",
+    amount: 1
+  });
+
+  assert.equal(tooLarge.ok, false);
+  assert.equal(missingBase.ok, false);
+  assert.equal(valid.ok, true);
+  assert.deepEqual(
+    [tooLarge.entry.attempt_sequence, missingBase.entry.attempt_sequence, valid.entry.attempt_sequence],
+    [1, 2, 3]
+  );
+  assert.deepEqual(
+    [tooLarge.entry.sequence, missingBase.entry.sequence, valid.entry.sequence],
+    [0, 0, 1]
+  );
+  assert.equal(valid.state.attempt_sequence, 3);
+  assert.equal(valid.state.sequence, 1);
+  assert.equal(conservationReport(valid.state).conserved, true);
+});
+
 test("sequenced authority state rejects authority-moving transition without base_sequence", () => {
   const state = createAuthorityState({
     root_id: "root",
@@ -239,6 +406,38 @@ test("sequenced authority state rejects authority-moving transition without base
   assert.equal(result.reason, "BASE_SEQUENCE_REQUIRED");
   assert.equal(conservationReport(result.state).available, 10);
   assert.equal(conservationReport(result.state).conserved, true);
+});
+
+test("missing base-sequence failure does not stale the next valid proposal", () => {
+  let state = createAuthorityState({
+    root_id: "root",
+    root_authorized: 10,
+    require_base_sequence: true
+  });
+
+  const missingBase = applyTransition(state, {
+    type: Transition.DELEGATE,
+    from: "root",
+    to: "agent:missing-base",
+    amount: 5
+  });
+  state = missingBase.state;
+
+  const valid = applyTransition(state, {
+    type: Transition.DELEGATE,
+    base_sequence: 0,
+    from: "root",
+    to: "agent:valid-after-missing-base",
+    amount: 5
+  });
+
+  assert.equal(missingBase.ok, false);
+  assert.equal(missingBase.reason, "BASE_SEQUENCE_REQUIRED");
+  assert.equal(missingBase.state.sequence, 0);
+  assert.equal(valid.ok, true);
+  assert.equal(valid.state.sequence, 1);
+  assert.equal(conservationReport(valid.state).available, 10);
+  assert.equal(conservationReport(valid.state).conserved, true);
 });
 
 test("sequenced authority state rejects reserve without base_sequence", () => {
@@ -298,4 +497,7 @@ test("hostile 10000 to 10001 harness rejects amplification", () => {
   assert.equal(demo.final_report.reserved, 9_990);
   assert.equal(demo.final_report.conserved, true);
   assert.ok(demo.results.every((result) => result.conserved_after));
+  assert.ok(demo.results.every((result, index) => result.attempt_sequence === index + 1));
+  assert.equal(demo.final_state.attempt_sequence, demo.results.length);
+  assert.ok(demo.results.every((result) => result.sequence <= result.attempt_sequence));
 });

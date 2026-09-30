@@ -1,5 +1,6 @@
 import { Reason, Status } from "./types.js";
 import { effectMatchesProof, isNullifierSpent } from "./authority-kernel.js";
+import { validateAuthorityUniverse } from "./authority-universe.js";
 import { validateCapacityCertificate } from "./capacity-kernel.js";
 import { consequencePolicy } from "./consequence-kernel.js";
 import { evaluateRevocation } from "./revocation-policy.js";
@@ -79,6 +80,11 @@ export function verify(effect, proof, policy, state) {
     return { status: Status.STALE, reason: Reason.STALE_CHECKPOINT };
   }
 
+  const authorityUniverse = validateAuthorityUniverse(proof, policy, verifiedState);
+  if (!authorityUniverse.ok) {
+    return { status: authorityUniverse.status, reason: authorityUniverse.reason };
+  }
+
   const revocation = evaluateRevocation(proof, policy, verifiedState);
   if (!revocation.ok) return { status: revocation.status, reason: revocation.reason };
 
@@ -110,6 +116,14 @@ export function defaultState() {
     consumed: 0,
     released: 0,
     spent_nullifiers: [],
-    revoked_mandates: []
+    revoked_mandates: [],
+    accepted_authority_checkpoints: {
+      "checkpoint:F1": {
+        sequence: 7,
+        authority_universe_id: "authority-universe:AEGIS-V:0",
+        global_authority_root_id: "gar:bank-root:example",
+        authority_state_root: "authority-root:F1"
+      }
+    }
   };
 }

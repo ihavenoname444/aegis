@@ -6,6 +6,8 @@
   "kernel_abi_hash": "abi:A1",
   "authority_schema_hash": "schema:S1",
   "verifier_profile_hash": "profile:P1",
+  "authority_universe_id": "authority-universe:AEGIS-V:0",
+  "global_authority_root_id": "gar:bank-root:example",
   "root_identity": "bank-root:example",
   "mandate_id": "mandate:M1",
   "mandate_version": 1,
@@ -29,6 +31,10 @@
   "revocation_checkpoint": 8000,
   "finalized_checkpoint": {
     "id": "checkpoint:F1",
+    "sequence": 7,
+    "authority_universe_id": "authority-universe:AEGIS-V:0",
+    "global_authority_root_id": "gar:bank-root:example",
+    "authority_state_root": "authority-root:F1",
     "time_ms": 9500,
     "finality_rule": "SAVANNA_F1",
     "kernel_code_hash": "kernel:H1"

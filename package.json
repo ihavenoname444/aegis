@@ -1,6 +1,6 @@
 {
   "name": "aegis-v-reference",
-  "version": "0.0.13",
+  "version": "0.0.17",
   "private": true,
   "description": "Reference model and verifier for conserved autonomous authority.",
   "type": "module",

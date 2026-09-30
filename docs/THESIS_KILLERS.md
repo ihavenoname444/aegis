@@ -18,3 +18,5 @@ Each killer must be tracked as an attack, not as a slogan.
 | K23 Verifier monoculture | One verifier bug becomes protocol truth. | Independent implementation disagrees. | UNPROVEN | Second verifier and conformance vectors. |
 | K24 Cold-start insufficient | One-domain deployment adds no value. | Local policy already enough. | UNPROVEN | Two-domain killer application. |
 | K25 Responsibility unacceptable | Proof valid but bank executes wrong action. | Liability boundary unclear. | UNPROVEN | Responsibility model. |
+| K26 Authority universe forks | Two domains accept conflicting histories for the same root authority. | Same checkpoint/sequence maps to two accepted authority roots. | IMPLEMENTATION_TESTED for known local conflicts | Model partitions, finality races and migration. |
+| K27 V not structurally necessary | WRAM, arbitrary collateral or bank/HSM capacity provides the same accepted service with a smaller TCB. | Equivalent non-equivocation and capacity non-double-backing without V. | UNPROVEN | Build substitute architecture and compare honestly. |

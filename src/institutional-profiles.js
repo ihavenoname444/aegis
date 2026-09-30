@@ -59,6 +59,10 @@ export function evaluateInstitutionalPolicy(policy, profileId) {
 function baseControls() {
   return [
     "canonical_authority_state",
+    "authority_non_equivocation",
+    "accepted_authority_universe",
+    "accepted_global_authority_root",
+    "accepted_authority_state_root",
     "complete_mediation",
     "pinned_verifier_profile",
     "pinned_kernel_account",
@@ -77,6 +81,10 @@ function baseControls() {
 
 const controlChecks = Object.freeze({
   canonical_authority_state: (policy) => policy.canonical_authority_state_required === true,
+  authority_non_equivocation: (policy) => policy.authority_non_equivocation_required === true,
+  accepted_authority_universe: (policy) => Boolean(policy.accepted_authority_universe_id),
+  accepted_global_authority_root: (policy) => Boolean(policy.accepted_global_authority_root_id),
+  accepted_authority_state_root: (policy) => nonEmpty(policy.accepted_authority_state_roots),
   complete_mediation: (policy) => policy.complete_mediation_required === true,
   pinned_verifier_profile: (policy) => nonEmpty(policy.accepted_verifier_profile_hashes),
   pinned_kernel_account: (policy) => Boolean(policy.accepted_kernel_account),

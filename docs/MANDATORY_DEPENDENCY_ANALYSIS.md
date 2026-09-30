@@ -140,6 +140,10 @@ V is mandatory for the AEGIS_V_HIGH_ASSURANCE_V0 capacity profile implemented in
 this reference model.
 ```
 
+V is not the source of authority non-equivocation itself. The authority-cannot-fork
+property comes from canonical authority history, complete mediation, checkpoint-root
+acceptance and fail-closed handling of stale or conflicting histories.
+
 The stronger production statement remains unproven:
 
 ```text
@@ -165,8 +169,9 @@ handling, upgrade safety, governance-capture resistance, portable proof
 verification and capacity non-double-backing.
 ```
 
-This repository is about 6,277 lines across source, tests, specs, docs, demos
-and formal-model drafts after v0.0.13. That is still a reference model, not production. The relevant moat
+This repository is a reference implementation across source, tests, specs, docs,
+demos and formal-model drafts after v0.0.17. That is still a reference model,
+not production. The relevant moat
 is not line count alone; it is the cost of proving, auditing and getting external
 institutions to accept the same semantics.
 

@@ -185,6 +185,12 @@ test("admin cannot release quarantined authority without resolution proof", () =
   const result = applyTransition(state, {
     type: Transition.RETURN,
     reservation_id: "reservation:q",
+    obligation_id: "obligation:q",
+    nullifier: "nullifier:q",
+    holder_id: "root",
+    amount: 10,
+    effect_id: "effect:q",
+    execution_domain: "BANK_RAIL",
     admin_override: true
   });
 
@@ -213,6 +219,12 @@ test("quarantined authority can release only with resolution proof", () => {
   const result = applyTransition(state, {
     type: Transition.RETURN,
     reservation_id: "reservation:q2",
+    obligation_id: "obligation:q2",
+    nullifier: "nullifier:q2",
+    holder_id: "root",
+    amount: 10,
+    effect_id: "effect:q2",
+    execution_domain: "BANK_RAIL",
     resolution_proof_id: "receipt-resolution:1"
   });
 

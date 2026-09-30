@@ -1,6 +1,6 @@
 # Current Repository Gap Analysis
 
-Audit date: 2026-09-29.
+Audit date: 2026-09-30.
 
 Repository audited: `outputs/aegis-v-reference`.
 
@@ -10,7 +10,7 @@ Verdict for this run:
 MODIFY
 ```
 
-The current repository is a useful reference verifier/demo scaffold. It is not yet a high-assurance autonomous authority architecture. It now includes a deterministic reference authority state machine, a `10,000 -> 10,001` hostile amplification harness, a reference V-backed capacity ledger, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, institutional assurance profiles, multi-principal root-binding hardening, recovery/re-binding non-expansion checks, reservation-binding completeness checks, stale base-sequence rejection, sequenced-mode base-sequence enforcement, seeded property tests, enumerated interleaving tests and first-pass TLA+ conservation specifications. It still does not implement migration safety, authority cells, distributed revocation/finality race modeling, production staking contract, or completed formal proof obligations required by the master architecture.
+The current repository is a useful reference verifier/demo scaffold. It is not yet a high-assurance autonomous authority architecture. It now includes a deterministic reference authority state machine, a `10,000 -> 10,001` hostile amplification harness, authority-universe/root/checkpoint binding, a reference V-backed capacity ledger, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, institutional assurance profiles, multi-principal root-binding hardening, recovery/re-binding non-expansion checks, reservation-binding completeness checks, return-binding mismatch rejection, failed-proposal sequence no-op hardening, unique audit-attempt ordering, stale base-sequence rejection, sequenced-mode base-sequence enforcement, seeded property tests, enumerated interleaving tests and first-pass TLA+ conservation specifications. It still does not implement migration safety, authority cells, distributed revocation/finality race modeling, production staking contract, or completed formal proof obligations required by the master architecture.
 
 Post-audit implementation update:
 
@@ -18,6 +18,10 @@ Post-audit implementation update:
 - `src/authority-kernel.js` now rejects `RESERVE` transitions with missing or blank reservation/economic binding fields.
 - `src/authority-kernel.js` now rejects transitions carrying stale or non-integer `base_sequence` preconditions.
 - `src/authority-kernel.js` now supports `require_base_sequence` for sequenced states and rejects authority-moving transitions missing `base_sequence` in that mode.
+- `src/authority-kernel.js` now separates canonical authority `sequence` from monotonic audit `attempt_sequence`.
+- `src/authority-universe.js` now rejects proofs outside the accepted authority universe/global authority root and rejects known checkpoint-root equivocation.
+- `src/verifier.js` now requires authority non-equivocation after freshness and before revocation/nullifier/capacity admission.
+- `tests/authority-universe.test.js` now implementation-tests authority universe mismatch, global root mismatch, missing checkpoint root, unaccepted checkpoint root and known history equivocation.
 - `src/hostile-harness.js` now runs a `10,000` root / `1,000` child / five-domain hostile amplification trace.
 - `src/capacity-kernel.js` now includes a provider-level capacity ledger that rejects global V double-backing and V/RAM substitution failures.
 - `src/revocation-policy.js` now implements `ONLINE_HIGH_ASSURANCE`, `BOUNDED_OFFLINE`, and `LOCAL_CELL` freshness profiles.
@@ -25,6 +29,9 @@ Post-audit implementation update:
 - `tests/authority-kernel.test.js` now implementation-tests missing-nullifier and blank-binding reservation rejection.
 - `tests/authority-kernel.test.js` now implementation-tests stale and type-forged `base_sequence` reservation rejection.
 - `tests/authority-kernel.test.js` now implementation-tests sequenced-mode missing-`base_sequence` rejection for delegation and reservation.
+- `tests/authority-kernel.test.js` now implementation-tests `RETURN` rejection when release evidence mismatches the original reservation binding.
+- `tests/authority-kernel.test.js` now implementation-tests that failed proposals do not advance canonical authority sequence.
+- `tests/authority-kernel.test.js` now implementation-tests monotonic `attempt_sequence` for rejected attempts and the full hostile trace.
 - `tests/capacity-ledger.test.js` now implementation-tests V double-backing, zero-V certificate rejection, RAM-only substitution rejection, V-only substitution rejection and capacity retirement.
 - `tests/revocation-policy.test.js` now implementation-tests revocation T0/T1/T2-style behavior for online, bounded-offline and local-cell modes.
 - `tests/governance-capture.test.js` now implementation-tests malicious H2 kernel rejection, profile hash pinning, ABI pinning, finality-rule pinning, finalized-H2 rejection, capacity-epoch non-retroactivity, cross-epoch V double-back rejection and admin override rejection.
@@ -32,6 +39,8 @@ Post-audit implementation update:
 - `tests/mandatory-dependency.test.js` now implementation-tests missing canonical authority state, V removal, A/WRAM/USDC/BTC/TOKEN_X substitution, missing unique V encumbrance and generic token-gate profile rejection.
 - `src/mandatory-dependency-demo.js` now runs the dependency redlines as a reviewer-facing CLI demo.
 - `docs/MANDATORY_DEPENDENCY_ANALYSIS.md` now defines the exact guarantee lost when AEGIS-V is bypassed and marks V production necessity as unproven.
+- `specs/11-authority-non-equivocation-v0.md` now formalizes the current authority-cannot-fork property and the non-coordinating-domain counterexample.
+- `docs/AUTHORITY_NON_EQUIVOCATION.md` now records the current theorem, strongest counterexample, V/WRAM substitution result and next experiments.
 - `src/institutional-profiles.js` now defines tier-1 bank, central-bank systemic and market-infrastructure policy gates.
 - `tests/institutional-profiles.test.js` now implementation-tests institutional high-assurance versus advisory/bypassable policy failure.
 - `docs/INSTITUTIONAL_READINESS.md` now frames the artifact for regulated institutional architecture review without claiming endorsement.
@@ -45,6 +54,8 @@ Post-audit implementation update:
 - `models/AuthorityKernel.tla` now specifies the first conservation invariant; it has not yet been TLC-checked in this run.
 - `models/AuthorityKernel.tla` now tracks reservation id uniqueness alongside obligation/nullifier uniqueness.
 - `models/AuthorityKernel.tla` now includes a sequence precondition on reservation transitions.
+- `models/AuthorityKernel.tla` now models active and quarantined binding tuples for consume/quarantine/return transitions.
+- `models/AuthorityKernel.tla` now models rejected proposals as canonical authority no-ops that still advance `attemptSequence`.
 - This remains implementation evidence, not formal proof.
 
 ## 1. Existing Repository Tree Summary
@@ -135,7 +146,7 @@ demos/
 - Simple capacity checks reject over-encumbered V and insufficient RAM commitment.
 - Complete mediation is at least represented as `agent_has_bypass_credential`.
 - Consequence uncertainty returns `UNKNOWN`.
-- 82 implementation/property tests pass.
+- 87 implementation/property tests pass.
 - Demo clearly communicates that accepted endpoints verify proof, not AI intent.
 - Reference authority state machine now conserves accounting across delegated, reserved, quarantined and consumed authority.
 - Reservation binding completeness is now implementation-tested for missing and blank binding fields.
@@ -173,7 +184,7 @@ Current implementation still risks giving the impression that tests are enough. 
 ## 5. What Is Missing
 
 - Model-checked formal authority state machine.
-- Complete transition log schema / machine-readable trace export.
+- Complete machine-readable trace export beyond reference `attempt_sequence` / `sequence` ordering.
 - Authority algebra by resource class.
 - Disjoint authority cells.
 - Concurrency model.
@@ -594,7 +605,7 @@ PARTIAL
 
 Current tests:
 
-- 82 Node tests.
+- 87 Node tests.
 - exact effect mismatch.
 - nullifier spent.
 - revoked mandate.
@@ -608,6 +619,9 @@ Current tests:
 - reservation binding completeness.
 - stale base-sequence rejection.
 - sequenced-mode base-sequence enforcement.
+- return-binding mismatch rejection.
+- failed-proposal sequence no-op hardening.
+- unique audit-attempt ordering.
 - same obligation across five rails.
 - fixed `10,000 -> 10,001` hostile trace.
 - global V capacity double-backing.
@@ -649,6 +663,7 @@ Current tests:
 - non-integer base-sequence reservation rejected.
 - sequenced-mode delegation without base_sequence rejected.
 - sequenced-mode reservation without base_sequence rejected.
+- rejected attempts have unique monotonic audit order.
 
 Good for verifier, first state-machine scaffold and early property testing. Insufficient for high-assurance architecture.
 
@@ -708,6 +723,9 @@ Good for verifier, first state-machine scaffold and early property testing. Insu
 16. `kernel: require complete reservation bindings` DONE IN v0.0.11
 17. `kernel: reject stale base-sequence transitions` DONE IN v0.0.12
 18. `kernel: require base sequence in sequenced mode` DONE IN v0.0.13
+19. `kernel: bind return evidence to reservations` DONE IN v0.0.14
+20. `kernel: keep failed proposals sequence-neutral` DONE IN v0.0.15
+21. `kernel: add monotonic audit attempt ordering` DONE IN v0.0.16
 
 ## 35. Files That Should Be Modified
 

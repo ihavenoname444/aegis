@@ -42,6 +42,10 @@ test("advisory AI policy is not high-assurance", () => {
   const result = evaluateInstitutionalPolicy({
     ...basePolicy,
     canonical_authority_state_required: false,
+    authority_non_equivocation_required: false,
+    accepted_authority_universe_id: "",
+    accepted_global_authority_root_id: "",
+    accepted_authority_state_roots: [],
     complete_mediation_required: false,
     accepted_capacity_asset: "USDC",
     unknown_consequence: "ALLOW"
@@ -49,6 +53,10 @@ test("advisory AI policy is not high-assurance", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.includes("canonical_authority_state"));
+  assert.ok(result.failed.includes("authority_non_equivocation"));
+  assert.ok(result.failed.includes("accepted_authority_universe"));
+  assert.ok(result.failed.includes("accepted_global_authority_root"));
+  assert.ok(result.failed.includes("accepted_authority_state_root"));
   assert.ok(result.failed.includes("complete_mediation"));
   assert.ok(result.failed.includes("v_capacity_asset"));
   assert.ok(result.failed.includes("fails_closed_unknown"));

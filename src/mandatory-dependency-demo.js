@@ -18,6 +18,30 @@ const scenarios = [
     state: undefined
   },
   {
+    name: "forked authority universe",
+    proof: {
+      ...baseProof,
+      authority_universe_id: "authority-universe:forked",
+      finalized_checkpoint: {
+        ...baseProof.finalized_checkpoint,
+        authority_universe_id: "authority-universe:forked"
+      }
+    },
+    state: cleanState
+  },
+  {
+    name: "forked global authority root",
+    proof: {
+      ...baseProof,
+      global_authority_root_id: "gar:shadow-root",
+      finalized_checkpoint: {
+        ...baseProof.finalized_checkpoint,
+        global_authority_root_id: "gar:shadow-root"
+      }
+    },
+    state: cleanState
+  },
+  {
     name: "remove V",
     proof: {
       ...baseProof,

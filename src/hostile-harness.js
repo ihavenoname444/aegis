@@ -114,6 +114,7 @@ export function runHostile10001Demo() {
 function run(state, results, transition) {
   const result = applyTransition(state, transition);
   results.push({
+    attempt_sequence: result.entry.attempt_sequence,
     sequence: result.entry.sequence,
     transition: result.entry.transition,
     id: result.entry.id,
