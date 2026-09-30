@@ -1,6 +1,6 @@
 # Protected Authority State v0
 
-Status: architecture proposal. No protected-state protocol implementation exists in this repository. Vaulta mainnet account permissions, deployed code hashes, active privileged contracts, and active protocol features have not been verified from chain data for this review.
+Status: architecture proposal; no protected-state protocol implementation exists in this repository. A partial live Vaulta permission/code/feature snapshot was captured on 2026-09-30 and is documented in [`docs/VAULTA_PRIVILEGE_SNAPSHOT_2026-09-30.md`](../docs/VAULTA_PRIVILEGE_SNAPSHOT_2026-09-30.md). It is not an atomic state-history proof at one LIB; validator software, exact deployed-source identity, action-level authorization, and migration paths remain unverified.
 
 ## Executive Summary
 
@@ -26,28 +26,28 @@ This proposal does not claim that block producers cannot change network software
 
 ## Current Antelope Privilege Audit
 
-The following separates documented Antelope mechanisms from the still-missing Vaulta mainnet audit. Standard transaction permissions and protocol software changes are different mechanisms; neither should be summarized as an unspecified “god mode.”
+The following separates documented Antelope mechanisms from the still-incomplete Vaulta mainnet audit. Standard transaction permissions and protocol software changes are different mechanisms; neither should be summarized as an unspecified “god mode.”
 
 | Mechanism | What the available primary documentation establishes | What remains unverified for Vaulta mainnet |
 |---|---|---|
-| `setcode` / `setabi` | Contract code and ABI are changed through transactions authorized for the target account. The transaction is still checked and applied under the chain's current rules. | Current AEGIS account (if any), code hash, ABI hash, permission tree, delay, and controlling keys. |
-| `updateauth` | Account permission authorities can be changed through an authorized system-contract action. Authority to change an account's permission tree is itself determined by the currently accepted authority rules. | Live permission trees and controller accounts for `eosio`, `eosio.prods`, `eosio.msig`, `eosio.wrap`, and every AEGIS-related account. |
-| `eosio.msig` | Multisig coordinates approval of transactions. The threshold is determined by the authority required by the proposed action; multisig is not a separate universal privilege threshold. | Deployed code hash, account authorities, active proposals, and the actual threshold for each relevant Vaulta action. |
-| `eosio.wrap::exec` | The Antelope reference guide describes an optional wrapper installed on a privileged account. Its example uses a typical 21-producer setup and 15 approvals, and demonstrates changing another account's owner authority through the wrapper. This is a conditional transaction path, not a raw database write. | Whether `eosio.wrap` is installed and privileged on Vaulta; its code hash and permissions; whether its authority can be invoked by a BP threshold; and any chain-specific restrictions. |
-| Privileged host APIs / protocol features | Antelope exposes privileged interfaces to privileged execution contexts, and protocol features are software-supported rules that can be preactivated/activated. Existing support and activation do not create arbitrary new protocol semantics. | Which interfaces and features are active on Vaulta, which accounts are privileged, and the exact deployed `eosio`/boot contract and node release. |
+| `setcode` / `setabi` | Contract code and ABI change through authorized chain actions; a target account's permission graph determines the applicable authority. | The live `eosio` ABI exposes these actions. Its owner and active permissions point to `eosio.prods@active` (15 of the 21 active producers). Exact authorization level and behavior for every target/action still need a source/replay trace. |
+| `updateauth` | Permission authorities change through an authorized system-contract action; the current authority graph governs that action. | The live `eosio` ABI exposes `updateauth`; `eosio@active` is reachable through `eosio.prods@active` at 15/21. All relevant target-account authorities and any special restrictions still need enumeration. |
+| `eosio.msig` | Multisig coordinates approval of transactions. Its threshold is the authority required by the proposed transaction; it is not a separate universal privilege threshold. | Live account is `privileged=true`, owner/active point to `eosio@active`, and the current ABI has the standard proposal/approval actions. Code/ABI hashes are in the snapshot; active proposals and bytecode/source identity remain unverified. |
+| `eosio.wrap::exec` | The reference wrapper can execute wrapped actions through a privileged transaction path; exact behavior depends on deployed code and authority. | Live account is `privileged=true`; ABI exposes `exec`; owner/active point to `eosio@active`, which resolves to 15/21. Code and ABI hashes are recorded. The deployed code hash has not been matched to a reproducible source build, so do not claim every upstream source behavior is proven for this deployment. |
+| Privileged host APIs / protocol features | Antelope exposes privileged interfaces to privileged execution contexts; protocol features are software-supported rules that can be preactivated/activated. | Snapshot observed `eosio`, `eosio.msig`, and `eosio.wrap` as privileged and Savanna as activated. The API provider reported Spring `v1.0.5`; that does not establish software versions used by all validators or exhaust the privileged-intrinsic surface. |
 | Generic arbitrary table write | The documentation reviewed does not establish a standard transaction action that directly overwrites arbitrary contract tables without executing authorized code. This is not a proof that every native or chain-specific path has been excluded. | Full source audit of the deployed Leap/Vaulta build, native actions, privileged contracts, and any migration hooks. |
 | Validator software / consensus change | Antelope's consensus and protocol behavior are implemented across node software and on-chain contracts. Operators can coordinate a new software regime; an old H1 verifier must therefore pin the regime it accepts. | Vaulta-specific upgrade procedure, activation rules, release currently used by validators, and operational thresholds. |
 
-The reference `eosio.wrap` guide's 15-of-21 example is **not evidence** that Vaulta currently has that exact permission graph. No live account state, code hash, producer schedule, or feature activation data was retrieved for this repository update. Accordingly, claims about Vaulta's exact current BP threshold or active privileged path remain **UNVERIFIED**.
+The reference `eosio.wrap` guide's 15-of-21 example is not evidence of Vaulta configuration. Independently, the 2026-09-30 read-only chain snapshot observed the same 15-of-21 threshold on Vaulta, with an exact 21-account match to the active schedule. This is partial on-chain evidence, not an atomic single-LIB state proof. See the snapshot for block numbers, hashes, source limits, and remaining audit work.
 
 ### Threat Model by Actor Set
 
 | Adversary | Conditional capability | H1-pinned verifier | Current contract-only overlay | Future protected-state domain |
 |---|---|---|---|---|
-| 15/21 BPs | Can execute only actions authorized by the live permission graph. If a relevant threshold path such as the documented wrapper configuration exists, they may replace code or permissions through that path. | Rejects non-H1 transitions only when it receives complete, authenticated transition evidence and the execution adapter requires the check. | Cannot force an institution to accept a changed profile, but cannot prevent a chain-level state change or an adapter bypass. | Consensus rejects a transition that violates the active H1 state rules. |
+| 15/21 BPs | Can satisfy the observed `eosio.prods@active` authority, which controls `eosio@active` and the observed `eosio.wrap@active`/`eosio.msig@active` permissions. The exact effects of each action still depend on its required permission, deployed code, and node behavior. | Rejects non-H1 transitions only when it receives complete, authenticated transition evidence and the execution adapter requires the check. | Cannot force an institution to accept a changed profile, but cannot prevent a chain-level state change or an adapter bypass. | Consensus rejects a transition that violates the active H1 state rules. |
 | 21/21 BPs | Can coordinate a new validator software/network regime, subject to the actual chain and operator behavior. This may halt the old regime or create H2. | Continues to reject H2 unless the institution opts in. | Provides no guarantee that the chain itself remains H1. | Old H1 nodes reject invalid H1 transitions; H2 remains a distinct regime and cannot silently inherit verifier trust. |
 
-The 15/21 row is a threat scenario, not a claim about Vaulta's live threshold. A threshold alone does not create a raw table-write primitive. The actual actions available depend on deployed contracts, permissions, and node software.
+The live account-level threshold is observed as 15/21, not merely a scenario. This does not establish a generic raw table-write primitive or mean that 15 producers can perform every action. Concrete effects require tracing the required permission level, deployed code, native privilege semantics, and validator software.
 
 ## Deployable Overlay Boundary
 
@@ -142,7 +142,7 @@ Therefore a new consensus validation rule requires a coordinated protocol/softwa
 
 | Property | Current Vaulta / generic Antelope evidence | AEGIS overlay today | Target protected-state Vaulta |
 |---|---|---|---|
-| BP privileged path | Generic paths exist through account permissions, multisig, optional privileged wrapper, and software coordination. Vaulta's live graph is not verified here. | Verifier trust is local; chain permissions still govern contract mutation. | H1 consensus validation rejects forbidden protected-state mutation. New software regimes remain possible. |
+| BP privileged path | Live partial snapshot: `eosio@active`, `eosio.wrap@active`, and `eosio.msig@active` resolve to a 15-of-21 producer authority; wrapper is privileged and exposes `exec`. Exact source identity, per-action trace, and validator release remain open. | Verifier trust is local; chain permissions still govern contract mutation. | H1 consensus validation rejects forbidden protected-state mutation. New software regimes remain possible. |
 | External verifier sovereignty | Not provided automatically by canonicality/finality. | Architecture is possible; this repo is a reference model, not a live production verifier. | Preserved alongside consensus checks. |
 | State-transition verification | Generic chain validity does not imply AEGIS H1 validity. | Must replay/authenticate all transitions from a pinned checkpoint. | Consensus validates every protected transition; institutions independently verify accepted profile/finality. |
 | Protected state | No AEGIS-specific consensus domain has been established by this audit. | No protocol protection; code/permission governance remains relevant. | GAR and transition rules are part of block validity. |
@@ -151,11 +151,11 @@ Therefore a new consensus validation rule requires a coordinated protocol/softwa
 | Capacity protection | No AEGIS V-capacity enforcement established on chain. | Reference ledger only. | Capacity root and unique encumbrance are protected transition invariants; actual V mechanism remains a separate requirement. |
 | Quarantine protection | No AEGIS-specific protocol invariant established. | Reference state machine only. | Quarantine release requires an accepted, validated resolution transition. |
 | Checkpoint continuity | Chain consensus has its own block/finality state. | Institution tracks a pinned authority checkpoint; production tracking is not implemented here. | Both protocol state and verifier enforce continuity; verifier still rejects unapproved regime changes. |
-| Governance dependence | Operators govern chain liveness and software regime; exact Vaulta threshold is unverified here. | Institution need not auto-follow governance for acceptance; availability and mediation remain dependencies. | Governance may halt or publish H2; it cannot mutate H1 protected state while validators enforce H1. |
+| Governance dependence | The sampled permission path has a 15/21 threshold; active-producer software/upgrade thresholds and all chain-level effects are not established by this snapshot. | Institution need not auto-follow governance for acceptance; availability and mediation remain dependencies. | Governance may halt or publish H2; it cannot mutate H1 protected state while validators enforce H1. |
 | Liveness risk | Censorship, outage, or loss of finality can stop progress. | Same network risk plus history/API availability risk. | Same operator/availability risks; protection does not guarantee liveness. |
 | Safety risk | No AEGIS-specific invariant claim follows from chain finality alone. | Invalid state can exist on chain; verifier must reject it and adapters must obey. | Invalid H1 transition is invalid to upgraded H1 validators; H2 remains a separate trust regime. |
 
-**Current Vaulta verdict:** NOT YET SHOWN SUFFICIENT FOR PROTOCOL-LEVEL AEGIS HIGH ASSURANCE. The AEGIS-specific state domain and Vaulta live privilege graph have not been verified. This does not rule out an independently verified overlay.
+**Current Vaulta verdict:** NOT ESTABLISHED FOR PROTOCOL-LEVEL AEGIS HIGH ASSURANCE. A partial live permission graph is now observed, including a 15/21 path to privileged wrapper and multisig account permissions. No AEGIS-specific state domain is deployed or demonstrated, and the source/action/validator audit is incomplete. This does not rule out an independently verified overlay.
 
 **Overlay verdict:** architecturally deployable today, but not production-ready from this repository alone. Live history authentication, finality verification, adapter complete mediation, key governance, and chain-specific account audit remain open.
 
@@ -211,23 +211,24 @@ Attack through code replacement, permission changes, wrapper execution, system a
 
 ## Required Audit Artifacts Before Implementation
 
-The chain-specific current-system audit is still open. Before protocol or adapter implementation, archive at a named LIB checkpoint:
+The chain-specific current-system audit is partially complete. The dated RPC evidence is in [`docs/VAULTA_PRIVILEGE_SNAPSHOT_2026-09-30.md`](../docs/VAULTA_PRIVILEGE_SNAPSHOT_2026-09-30.md). Before protocol or adapter implementation, close these gaps:
 
-- account JSON and permission trees for `eosio`, `eosio.prods`, `eosio.msig`, `eosio.wrap`, and every proposed AEGIS account;
-- code and ABI hashes for those accounts, plus verified source/reproducible build information where available;
-- active producer schedule and the authority threshold for each relevant action;
-- active protocol-feature set and exact Leap/Vaulta node software versions;
+- repeat all account JSON/permissions, hashes, feature and producer-schedule queries as one reproducible snapshot at a single named LIB, including every proposed AEGIS account;
+- match current code/ABI hashes to verified source and reproducible builds where available;
+- map each relevant action to the exact required permission, including wrapper, system actions, native actions and migration paths;
+- enumerate active multisig proposals and capture active protocol features at the same checkpoint;
+- establish software releases operated by active validators; the API-node version is not evidence of validator versions;
 - a source trace for `setcode`, `setabi`, `updateauth`, `setpriv`, wrapper execution, privileged intrinsics, table mutation, and any state migration route;
 - a reproducible replay showing which state changes 15/21 and 21/21 can cause under current permissions.
 
-Until then, report chain-specific privilege claims as **UNVERIFIED**. Do not infer live Vaulta configuration from generic Antelope examples.
+Until those gaps close, distinguish **observed account fields** from **atomic-LIB, source-verified action effects, and validator-software claims**. Do not infer live Vaulta configuration from generic Antelope examples.
 
 ## Next 10 Commits
 
 These are a proposed sequence, not authorization to start them automatically:
 
-1. `audit: snapshot Vaulta privileged accounts at a named LIB` — archive permission trees, code hashes, feature status, active schedule, and software versions.
-2. `audit: trace Antelope privileged mutation paths` — source-backed call graph for account permission, wrapper, native privilege, and migration paths.
+1. `audit: pin Vaulta privilege snapshot to one LIB` — replace the partial near-LIB capture with reproducible same-checkpoint state proofs.
+2. `audit: match deployed code and trace mutation paths` — source/build identity plus action-to-authority call graph for permissions, wrapper, native privilege, and migration paths.
 3. `spec: define authenticated Vaulta transition history` — identify block, action, witness, and completeness proofs.
 4. `spec: define canonical GAR encoding and profile digest` — publish test vectors and versioning rules.
 5. `model: specify H1 verifier checkpoint continuity` — partitions, rollback, missing history, conflicting branches, and H2.
@@ -247,3 +248,5 @@ These are a proposed sequence, not authorization to start them automatically:
 - [Antelope producer API: protocol feature activation](https://docs.antelope.io/leap-plugins/latest/producer.api/) — activation of features supported by producer software.
 - [Antelope protocol overview](https://docs.antelope.io/docs/latest/protocol/) — separation between node protocol primitives and reference smart contracts.
 - [Vaulta: token swap and network continuity](https://www.vaulta.com/resources/vaulta-token-swap-a-begins-may-14) — Vaulta's statement that it continued the EOS mainnet using Antelope technology; this does not establish present account permissions or active protocol features.
+- [Vaulta Chain API](https://docs.eosnetwork.com/apis/spring/latest/chain.api/) — public chain endpoints used for the dated snapshot.
+- [Vaulta system-contract source](https://github.com/VaultaFoundation/system-contracts) — upstream source reference only; not yet matched to the deployed code hashes.

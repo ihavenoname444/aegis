@@ -18,7 +18,7 @@ The architecture now distinguishes an **independently verified overlay** from a 
 
 `specs/12-protected-authority-state-v0.md` defines the overlay boundary, the minimum consensus primitive, the H1/H2 migration rule, data-availability requirements, proof-method tradeoffs, the conditional theorem, and the next ten audit/proposal commits. It is a design proposal only; no consensus code or protocol implementation was added.
 
-The Vaulta-specific privileged account graph remains **UNVERIFIED**. We have not snapshotted account permissions, `eosio.wrap` code/privilege, active protocol features, producer schedule, deployed system code hashes, or validator software from a named LIB. Generic Antelope documentation, including its illustrative 15-of-21 wrapper example, must not be represented as Vaulta live configuration.
+The Vaulta-specific privileged account graph is now **PARTIALLY OBSERVED** in [`docs/VAULTA_PRIVILEGE_SNAPSHOT_2026-09-30.md`](VAULTA_PRIVILEGE_SNAPSHOT_2026-09-30.md): `eosio@active`, `eosio.wrap@active`, and `eosio.msig@active` resolve through a 15-of-21 producer authority; `eosio.wrap` is privileged and its ABI exposes `exec`. The capture is not an atomic single-LIB proof; deployed-source identity, action-level authority mapping, active multisig proposals, and validator software remain unverified. Generic Antelope documentation is not itself evidence of Vaulta configuration.
 
 Current verdict: the repository supports a verifier-level reference overlay; protocol-level AEGIS high assurance on current Vaulta is **NOT ESTABLISHED**. No broader implementation should start until the live chain audit and protected-state proposal are independently reviewed.
 

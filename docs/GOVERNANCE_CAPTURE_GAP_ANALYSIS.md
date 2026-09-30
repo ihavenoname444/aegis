@@ -27,7 +27,7 @@ The principal remains root. Governance may affect liveness, availability, censor
 | Current governance trust assumptions in repo | Earlier docs under-specified governance capture. v0.0.6 now treats governance as adversarial. | IMPROVED |
 | Assumptions too strong | Any assumption that latest kernel, latest capacity epoch or finalized chain state equals accepted authority. | IDENTIFIED |
 | Exact admin/upgrade authority graph | No real deployment accounts or Vaulta permission graph exists in repo. | UNRESOLVED |
-| Current Vaulta `eosio.wrap` installation, privilege, code hash, and controller threshold | Not read from a named mainnet LIB; generic Antelope documentation is not chain-state evidence. | UNVERIFIED |
+| Current Vaulta `eosio.wrap` installation, privilege, code/ABI hashes, and controller threshold | Partially observed from the public Chain API on 2026-09-30; `exec` ABI and a 15/21 authority path were returned. Not one atomic LIB snapshot and deployed-source identity is unresolved. | PARTIAL_ON_CHAIN_EVIDENCE |
 | Ordinary contract deployment protects AEGIS state from sufficiently privileged code/permission/protocol changes | No; only an institution's independent verifier can reject those states today, and the production overlay is not implemented here. | NOT PROTOCOL-PROTECTED |
 | AEGIS-specific consensus-protected state domain exists on current Vaulta | No evidence found in this repository or the reviewed public documentation. | NOT ESTABLISHED |
 | Kernel trust currently pinned | Yes: `accepted_kernel_account`, `accepted_kernel_hashes`, `accepted_kernel_abi_hashes`. | IMPLEMENTED_REFERENCE |

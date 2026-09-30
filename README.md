@@ -44,7 +44,7 @@ AEGIS has two distinct layers. An institution can follow Vaulta finality and sti
 
 Consensus-protected AEGIS state is a stronger future target. A contract alone cannot make its state immune to every privileged code, permission, or protocol change. Enforcing AEGIS transition rules as block-validity rules requires consensus software support and a coordinated network upgrade. Even then, a new network regime does not automatically inherit an institution's trust in the old profile.
 
-The Vaulta-specific live permission graph, deployed privileged code, and active protocol features have not yet been verified from chain data. The exact current audit, proposed protected-state primitive, conditional theorem, and open evidence are in [Protected Authority State v0](specs/12-protected-authority-state-v0.md).
+The Vaulta-specific audit now includes a partial read-only mainnet snapshot: `eosio@active` resolves to a 15-of-21 producer authority, and privileged `eosio.wrap`/`eosio.msig` permissions resolve through it. This is not an atomic single-LIB state proof, a deployed-source match, or proof of every action's effects. See the [dated snapshot](docs/VAULTA_PRIVILEGE_SNAPSHOT_2026-09-30.md) and [Protected Authority State v0](specs/12-protected-authority-state-v0.md).
 
 ## Target Invariants
 
