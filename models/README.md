@@ -42,6 +42,10 @@ NOT YET TLC-CHECKED IN THIS REPOSITORY RUN
 NOT A PRODUCTION PROOF
 ```
 
+## Protected Authority State
+
+The protocol-level proposal is documented in `specs/12-protected-authority-state-v0.md`. There is not yet a model of consensus-protected state, generic privileged bypasses, authenticated-history loss, or H1/H2 migration. Add that model only after the Vaulta permission audit and protocol primitive are reviewed.
+
 Next formal targets:
 
 - reservation records instead of aggregate counters;

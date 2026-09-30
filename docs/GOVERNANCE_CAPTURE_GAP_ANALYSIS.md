@@ -1,12 +1,14 @@
 # Governance Capture Gap Analysis
 
-Audit date: 2026-09-29.
+Audit date: 2026-09-30.
 
 Verdict:
 
 ```text
 SURVIVES WITH ASSUMPTIONS
 ```
+
+Architecture boundary update: the verifier's pinned-policy behavior is not a protocol-level guarantee. An institution may reject a finalized state that violates its H1 rules, but this does not stop the chain from publishing that state or prevent an adapter from bypassing verification. The proposed consensus-protected state domain and the evidence required to audit Vaulta's actual permissions are specified in [`specs/12-protected-authority-state-v0.md`](../specs/12-protected-authority-state-v0.md).
 
 The reference verifier now rejects governance-published kernels, ABIs, verifier profiles, capacity epochs and finalized states that are outside the institution's explicitly pinned policy. This is enough for the reference model to demonstrate verifier sovereignty. It is not yet enough for production high assurance because real Vaulta deployment accounts, permissions, multisigs, upgrade paths and on-chain contracts are not present in this repository.
 
@@ -25,6 +27,9 @@ The principal remains root. Governance may affect liveness, availability, censor
 | Current governance trust assumptions in repo | Earlier docs under-specified governance capture. v0.0.6 now treats governance as adversarial. | IMPROVED |
 | Assumptions too strong | Any assumption that latest kernel, latest capacity epoch or finalized chain state equals accepted authority. | IDENTIFIED |
 | Exact admin/upgrade authority graph | No real deployment accounts or Vaulta permission graph exists in repo. | UNRESOLVED |
+| Current Vaulta `eosio.wrap` installation, privilege, code hash, and controller threshold | Not read from a named mainnet LIB; generic Antelope documentation is not chain-state evidence. | UNVERIFIED |
+| Ordinary contract deployment protects AEGIS state from sufficiently privileged code/permission/protocol changes | No; only an institution's independent verifier can reject those states today, and the production overlay is not implemented here. | NOT PROTOCOL-PROTECTED |
+| AEGIS-specific consensus-protected state domain exists on current Vaulta | No evidence found in this repository or the reviewed public documentation. | NOT ESTABLISHED |
 | Kernel trust currently pinned | Yes: `accepted_kernel_account`, `accepted_kernel_hashes`, `accepted_kernel_abi_hashes`. | IMPLEMENTED_REFERENCE |
 | Capacity epochs immutable/non-retroactive | Verifier accepts only `accepted_capacity_epochs`; ledger sums live V across epochs. | IMPLEMENTED_REFERENCE |
 | Can governance silently alter accepted authority | In reference verifier, no: H2/profile/ABI/finality changes are rejected unless pinned. | IMPLEMENTATION_TESTED |
@@ -83,7 +88,7 @@ Required production table:
 Status:
 
 ```text
-UNRESOLVED UNTIL REAL DEPLOYMENT ACCOUNTS AND PERMISSIONS ARE IMPORTED.
+UNRESOLVED UNTIL REAL DEPLOYMENT ACCOUNTS, CODE HASHES, ACTIVE FEATURES, AND PERMISSIONS ARE SNAPSHOTTED FROM A NAMED LIB. The Antelope `eosio.wrap` guide's example uses 15 approvals out of 21 active producers; that example is not proof of Vaulta's live threshold.
 ```
 
 ## Minimal Counterexample If Not Fixed

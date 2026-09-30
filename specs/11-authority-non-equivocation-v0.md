@@ -1,5 +1,7 @@
 # Authority Non-Equivocation v0
 
+Scope boundary: this specification defines verifier-accepted authority history. It does not claim that current Vaulta consensus enforces these AEGIS rules. A finalized chain state may still be invalid under a pinned H1 profile; an independent verifier must reject it when it can authenticate and replay the full transition history. The current-vs-target distinction and consensus-protected proposal are in [`12-protected-authority-state-v0.md`](12-protected-authority-state-v0.md).
+
 ## Property
 
 AEGIS-V attempts to prevent double-spending of delegated autonomous authority.
@@ -115,3 +117,5 @@ The verifier now requires:
 - no locally known checkpoint/sequence equivocation in verifier state.
 
 The property is implementation-tested in `tests/authority-universe.test.js`.
+
+This test coverage rejects selected known conflicts in the reference model. It does not prove arbitrary distributed-schedule safety, authenticate a live Vaulta history, or prevent privileged chain-level changes. Those claims remain open under the audit and proposal in `specs/12-protected-authority-state-v0.md`.

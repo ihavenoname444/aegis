@@ -38,11 +38,21 @@ Final accounting remains conserved
 - No token price model.
 - No production cryptography claims.
 
-## Core Invariants
+## Current Architecture Boundary
+
+AEGIS has two distinct layers. An institution can follow Vaulta finality and still independently decide whether each state transition is valid under its pinned verifier profile. That is the deployable overlay direction; this repository is currently only a reference model, not a live production verifier.
+
+Consensus-protected AEGIS state is a stronger future target. A contract alone cannot make its state immune to every privileged code, permission, or protocol change. Enforcing AEGIS transition rules as block-validity rules requires consensus software support and a coordinated network upgrade. Even then, a new network regime does not automatically inherit an institution's trust in the old profile.
+
+The Vaulta-specific live permission graph, deployed privileged code, and active protocol features have not yet been verified from chain data. The exact current audit, proposed protected-state primitive, conditional theorem, and open evidence are in [Protected Authority State v0](specs/12-protected-authority-state-v0.md).
+
+## Target Invariants
+
+These are target properties of an accepted profile, not claims that the current Vaulta network or this reference repository proves them end to end.
 
 ```text
 Authority cannot amplify.
-Authority cannot fork.
+An H1-pinned verifier rejects conflicting authority checkpoints it can authenticate.
 Authority cannot replay.
 Authority cannot exceed scope.
 Authority cannot resurrect after revocation.
@@ -132,6 +142,7 @@ Security review status:
 - `docs/INSTITUTIONAL_READINESS.md` frames the reference model for regulated institutional review.
 - `docs/COMPOSITION_MODEL.md` defines the first module-composition safety model.
 - `docs/THESIS_KILLERS.md` tracks the highest-risk falsification tests.
+- `specs/12-protected-authority-state-v0.md` separates verifier sovereignty today from consensus-protected authority state as the protocol target.
 
 ## Demo Output
 

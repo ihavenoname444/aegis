@@ -12,6 +12,16 @@ MODIFY
 
 The current repository is a useful reference verifier/demo scaffold. It is not yet a high-assurance autonomous authority architecture. It now includes a deterministic reference authority state machine, a `10,000 -> 10,001` hostile amplification harness, authority-universe/root/checkpoint binding, a reference V-backed capacity ledger, revocation freshness profiles, governance-capture hardening, mandatory-dependency redline tests, institutional assurance profiles, multi-principal root-binding hardening, recovery/re-binding non-expansion checks, reservation-binding completeness checks, return-binding mismatch rejection, failed-proposal sequence no-op hardening, unique audit-attempt ordering, stale base-sequence rejection, sequenced-mode base-sequence enforcement, seeded property tests, enumerated interleaving tests and first-pass TLA+ conservation specifications. It still does not implement migration safety, authority cells, distributed revocation/finality race modeling, production staking contract, or completed formal proof obligations required by the master architecture.
 
+## Protected-State Architecture Update
+
+The architecture now distinguishes an **independently verified overlay** from a future **consensus-protected authority state domain**. The current verifier demonstrates policy pinning and rejection of selected invalid reference states; it does not make Vaulta consensus reject those states, authenticate the full live transition history, or guarantee that institutional adapters cannot bypass verification.
+
+`specs/12-protected-authority-state-v0.md` defines the overlay boundary, the minimum consensus primitive, the H1/H2 migration rule, data-availability requirements, proof-method tradeoffs, the conditional theorem, and the next ten audit/proposal commits. It is a design proposal only; no consensus code or protocol implementation was added.
+
+The Vaulta-specific privileged account graph remains **UNVERIFIED**. We have not snapshotted account permissions, `eosio.wrap` code/privilege, active protocol features, producer schedule, deployed system code hashes, or validator software from a named LIB. Generic Antelope documentation, including its illustrative 15-of-21 wrapper example, must not be represented as Vaulta live configuration.
+
+Current verdict: the repository supports a verifier-level reference overlay; protocol-level AEGIS high assurance on current Vaulta is **NOT ESTABLISHED**. No broader implementation should start until the live chain audit and protected-state proposal are independently reviewed.
+
 Post-audit implementation update:
 
 - `src/authority-kernel.js` now includes executable transitions for `DELEGATE`, `RESERVE`, `CONSUME`, `QUARANTINE`, `RETURN`, and `REVOKE_MANDATE`.

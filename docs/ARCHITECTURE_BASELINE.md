@@ -11,6 +11,8 @@ NOT ACCEPTED AS PRODUCTION SECURITY
 
 This repository is a reference artifact for the conserved-authority category. It is not a production deployment.
 
+Authority validity is separate from network finality. Current code models an institution's local acceptance decision; it does not add AEGIS-specific consensus validation to Vaulta. The protocol-level target and current evidence limits are documented in [`specs/12-protected-authority-state-v0.md`](../specs/12-protected-authority-state-v0.md).
+
 ## Trust Boundaries
 
 | Layer | Responsibility | Non-Responsibility |
@@ -21,6 +23,7 @@ This repository is a reference artifact for the conserved-authority category. It
 | Capacity plane | V/RAM-backed admission | Does not create root authority |
 | Finality plane | State is finalized | Does not prove external execution |
 | External verifier | Local acceptance decision | Does not force execution |
+| Consensus-protected authority state (target only) | Rejects invalid AEGIS transitions at block validation | Does not prevent operators publishing a distinct future regime |
 | Execution rail | Performs external action | Does not define global authority |
 | Reconciliation | Updates remaining authority state | Does not roll back reality |
 
@@ -44,4 +47,3 @@ BYPASSABLE / ADVISORY ONLY
 ## First Critical Failure Condition
 
 If a recognized high-assurance proof can validate without a V-backed capacity certificate, the V design fails.
-

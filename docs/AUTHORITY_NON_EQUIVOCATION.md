@@ -35,6 +35,8 @@ same global authority root, accepted checkpoint root, complete mediation, nullif
 set, revocation view and capacity profile, then the reference verifier rejects
 known attempts to make one authority history appear as two accepted histories.
 
+This is verifier-level evidence only. It does not mean current Vaulta consensus enforces the AEGIS transition rules, and it does not mean every finalized state is accepted by H1. An H1-pinned institution must independently authenticate and validate the transition history. The future consensus-protected state target, current Antelope privilege distinctions, and Vaulta-specific evidence gap are recorded in [`specs/12-protected-authority-state-v0.md`](../specs/12-protected-authority-state-v0.md).
+
 ## F. Strongest Current Counterexample
 
 Two independent domains that never coordinate can each accept stale local authority
